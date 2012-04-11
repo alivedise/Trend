@@ -1,0 +1,1 @@
+steal("funcunit/qunit", "./trend_test.js", './connection_test.js');

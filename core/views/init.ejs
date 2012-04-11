@@ -1,0 +1,43 @@
+<ul>
+	<li><a href="#manual">Manual</a></li>
+	<li><a href="#schedule">Scheduled</a></li>
+</ul>
+<div id="manual">
+</div>
+<div id="schedule">
+	<form <%= this %>>
+		<fieldset>
+			<ul>
+				<li>To verify the connection by clicking Apply.</li>
+				<li class="float">
+					<%== $.View('/nr/component/checkbox', {name: 'enable', label: 'Enable Scheduled Verification', noli: true, value: true}) %>
+					<ul>
+						<%== $.View('/nr/component/radio', {name: 'schedule', label: 'Once', value: 'once', current: 'once'}) %>
+						<%== $.View('/nr/component/radio', {name: 'schedule', label: 'Hourly', value: 'hourly', current: 'once'}) %>
+						<%== $.View('/nr/component/radio', {name: 'schedule', label: 'Daily', value: 'daily', current: 'once'}) %>
+						<li>
+							<label>
+							Target IP Address:
+							</label><br/>
+							<div name="ip">
+								<input name="oct1" type="text" class="ip" maxlength=3 size=3>.
+								<input name="oct2" type="text" class="ip" maxlength=3 size=3>.
+								<input name="oct3" type="text" class="ip" maxlength=3 size=3>.
+								<input name="oct4" type="text" class="ip" maxlength=3 size=3>
+							</div>
+							<br/>
+							e.g.192.168.2.1
+						</li>
+					</ul>
+				</li>
+				<li class="float">
+					<label>Start Time:</label>
+				</li>
+			</ul>
+		</fieldset>
+		<fieldset>
+			<button id="apply">Apply</button>
+			<button id="cancel">Cancel</button>
+		</fieldset>
+	</form>
+</div>

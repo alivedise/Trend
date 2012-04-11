@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+            "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+	<head>
+		<title>Trend.Connection.Create</title>
+        <style type='text/css'>
+            body {font-family: verdana}
+        </style>
+	</head>
+	<body>
+	    <h1>Trend.Connection.Create Demo</h1>
+		<form id='create' action=''></form>
+		<div id='connections'></div>
+		<script type='text/javascript' 
+                src='../../../steal/steal.js'>
+        </script>
+		<script type='text/javascript'>
+			steal('trend/connection/create','trend/fixtures',function(){
+				
+				$('#create').trend_connection_create();
+				Trend.Models.Connection.bind('created', function(ev, connection){
+					$('<div>').html("<h3>"+connection.name+"</h3><p>"+connection.description+"</p>")
+					        .appendTo( $('#connections') )
+				})
+				
+			})
+		</script>
+	</body>
+</html>

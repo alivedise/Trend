@@ -1,0 +1,5 @@
+<%for(var i = 0; i < this.length ; i++){%>
+	<li <%= this[i]%>>
+		<%== $.View('//trend/connection/list/views/connection.ejs', this[i] )%>
+	</li>
+<%}%>
