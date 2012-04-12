@@ -18,7 +18,7 @@ $.Model('Trend.Models.Connection',
 		var self = this;
 		this.validate('ip', function(){
 			if(!self.isIP(this.ip)) {
-				return 'invalid_ip_address'
+				return 'Invalid ip address. IP Address must range from 0 to 255.';
 			}
 		});
 	},

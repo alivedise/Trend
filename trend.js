@@ -4,8 +4,7 @@ steal(
 	'./fixtures/fixtures.js',	// sets up fixtures for your models
 	'trend/connection/create',
 	'trend/connection/list',
+	'trend/core',
 	function(){					// configure your application
 		
-		$('#connections').trend_connection_list();
-		$('#create').trend_connection_create();
 })
