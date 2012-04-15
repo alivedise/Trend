@@ -1,0 +1,2 @@
+<% var disabled = (this.disabled) ? 'disabled' : '' %>
+<input type="checkbox" name="<%= name %>" id="<%= name %>" <%= value ? 'checked' : value == name ? 'checked':'' %> value="<%= value %>" <%= disabled %>></input><label for="<%=name%>"><%=label%></label>

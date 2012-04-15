@@ -1,0 +1,2 @@
+<% var prefix = new Date().getTime() %>
+<input value=<%= value %> id="<%= prefix+name+value %>" type="radio" name="<%= name %>" <%= current == value ? 'checked':'' %>></input><label class="bold" for="<%= prefix + name + value %>"><%= label %></label>
