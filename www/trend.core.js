@@ -16212,20 +16212,24 @@ Trend.Base('Trend.Core.Message',
 /** @Static */
 {
 	defaults : {
-		hosted: '.trend_core'
+		hosted: '.trend_core',
+		message: ''
 	},
 	onElement: 'body',
 	isSingleton: true,
 	destroy: function(){
-		if(this.current == 'body')
+		if(element.data('controllers') && element.data('controllers')[this._fullName])
 		{
-			$.unblockUI();
+			if(this.current == 'body')
+			{
+				$.unblockUI();
+			}
+			else
+			{
+				$(this.current).unblock();
+			}
+			this.instance().destroy();
 		}
-		else
-		{
-			$(this.current).unblock();
-		}
-		this.instance().destroy();
 	},
 	current: ''
 },
@@ -30018,6 +30022,8 @@ $.Model('Trend.Models.Connection',
 		var self = this;
 		Trend.Core.Message.instance({message: 'Saving changes, please wait...'});
 		$.fixture.delay = 2000;
+		if(!attrs.id)
+			attrs['id'] = 0;
 		$.fixture('/fixture/post/'+$.String.underscore(this.shortName)+'/'+attrs.id, function(orig, settings, headers){
 			var test = new self(attrs);
 			if(test.errors()){
