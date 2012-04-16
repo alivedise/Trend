@@ -30535,7 +30535,6 @@ $.Controller('Trend.Core',
 		$.each(data, function(key, value){
 			recursive_func('', key, value, recursive_func);
 		});
-		self.dependancy_check();
 	},
 	'button#apply click': function(){
 		this.save();
