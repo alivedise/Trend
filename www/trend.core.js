@@ -30140,7 +30140,7 @@ $.Controller('Trend.Core',
 		ev.preventDefault();
 	},
 	save: function(){
-		this.removeNotify();
+		this.remove_notify();
 		this.find('form').model().save(this.callback(['remove_notify','save_success']), this.callback(['remove_notify','save_error']));
 	},
 	remove_notify: function(){
