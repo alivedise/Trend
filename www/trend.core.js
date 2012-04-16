@@ -15804,6 +15804,201 @@ var compareMethods = {
 	
 })(jQuery);
 (function($){
+    /**
+     * @page jQuery.toJSON jQuery.toJSON
+     * @parent jquerymx.lang
+     * 
+     *     jQuery.toJSON( json-serializble )
+     * 
+     * Converts the given argument into a JSON respresentation.
+     * 
+     * If an object has a "toJSON" function, that will 
+     * be used to get the representation.
+     * Non-integer/string keys are skipped in the 
+     * object, as are keys that point to a function.
+     * 
+     * json-serializble:
+     * The *thing* to be converted.
+     */
+    $.toJSON = function(o, replacer, space, recurse)
+    {
+        if (typeof(JSON) == 'object' && JSON.stringify)
+            return JSON.stringify(o, replacer, space);
+
+        if (!recurse && $.isFunction(replacer))
+            o = replacer("", o);
+
+        if (typeof space == "number")
+            space = "          ".substring(0, space);
+        space = (typeof space == "string") ? space.substring(0, 10) : "";
+        
+        var type = typeof(o);
+    
+        if (o === null)
+            return "null";
+    
+        if (type == "undefined" || type == "function")
+            return undefined;
+        
+        if (type == "number" || type == "boolean")
+            return o + "";
+    
+        if (type == "string")
+            return $.quoteString(o);
+    
+        if (type == 'object')
+        {
+            if (typeof o.toJSON == "function") 
+                return $.toJSON( o.toJSON(), replacer, space, true );
+            
+            if (o.constructor === Date)
+            {
+                var month = o.getUTCMonth() + 1;
+                if (month < 10) month = '0' + month;
+
+                var day = o.getUTCDate();
+                if (day < 10) day = '0' + day;
+
+                var year = o.getUTCFullYear();
+                
+                var hours = o.getUTCHours();
+                if (hours < 10) hours = '0' + hours;
+                
+                var minutes = o.getUTCMinutes();
+                if (minutes < 10) minutes = '0' + minutes;
+                
+                var seconds = o.getUTCSeconds();
+                if (seconds < 10) seconds = '0' + seconds;
+                
+                var milli = o.getUTCMilliseconds();
+                if (milli < 100) milli = '0' + milli;
+                if (milli < 10) milli = '0' + milli;
+
+                return '"' + year + '-' + month + '-' + day + 'T' +
+                             hours + ':' + minutes + ':' + seconds + 
+                             '.' + milli + 'Z"'; 
+            }
+
+            var process = ($.isFunction(replacer)) ?
+                function (k, v) { return replacer(k, v); } :
+                function (k, v) { return v; },
+                nl = (space) ? "\n" : "",
+                sp = (space) ? " " : "";
+
+            if (o.constructor === Array) 
+            {
+                var ret = [];
+                for (var i = 0; i < o.length; i++)
+                    ret.push(( $.toJSON( process(i, o[i]), replacer, space, true ) || "null" ).replace(/^/gm, space));
+
+                return "[" + nl + ret.join("," + nl) + nl + "]";
+            }
+        
+            var pairs = [], proplist;
+            if ($.isArray(replacer)) {
+                proplist = $.map(replacer, function (v) {
+                    return (typeof v == "string" || typeof v == "number") ?
+                        v + "" :
+                        null;
+                });
+            }
+            for (var k in o) {
+                var name, val, type = typeof k;
+
+                if (proplist && $.inArray(k + "", proplist) == -1)
+                    continue;
+
+                if (type == "number")
+                    name = '"' + k + '"';
+                else if (type == "string")
+                    name = $.quoteString(k);
+                else
+                    continue;  //skip non-string or number keys
+            
+                val = $.toJSON( process(k, o[k]), replacer, space, true );
+            
+                if (typeof val == "undefined")
+                    continue;  //skip pairs where the value is a function.
+            
+                pairs.push((name + ":" + sp + val).replace(/^/gm, space));
+            }
+
+            return "{" + nl + pairs.join("," + nl) + nl + "}";
+        }
+    };
+
+    /** 
+     * @function jQuery.evalJSON
+     * Evaluates a given piece of json source.
+     **/
+    $.evalJSON = function(src)
+    {
+        if (typeof(JSON) == 'object' && JSON.parse)
+            return JSON.parse(src);
+        return eval("(" + src + ")");
+    };
+    
+    /** 
+     * @function jQuery.secureEvalJSON
+     * Evals JSON in a way that is *more* secure.
+     **/
+    $.secureEvalJSON = function(src)
+    {
+        if (typeof(JSON) == 'object' && JSON.parse)
+            return JSON.parse(src);
+        
+        var filtered = src;
+        filtered = filtered.replace(/\\["\\\/bfnrtu]/g, '@');
+        filtered = filtered.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']');
+        filtered = filtered.replace(/(?:^|:|,)(?:\s*\[)+/g, '');
+        
+        if (/^[\],:{}\s]*$/.test(filtered))
+            return eval("(" + src + ")");
+        else
+            throw new SyntaxError("Error parsing JSON, source is not valid.");
+    };
+
+    /** 
+     * @function jQuery.quoteString
+     * 
+     * Returns a string-repr of a string, escaping quotes intelligently.  
+     * Mostly a support function for toJSON.
+     * 
+     * Examples:
+     * 
+     *      jQuery.quoteString("apple") //-> "apple"
+     * 
+     *      jQuery.quoteString('"Where are we going?", she asked.')
+     *        // -> "\"Where are we going?\", she asked."
+     **/
+    $.quoteString = function(string)
+    {
+        if (string.match(_escapeable))
+        {
+            return '"' + string.replace(_escapeable, function (a) 
+            {
+                var c = _meta[a];
+                if (typeof c === 'string') return c;
+                c = a.charCodeAt();
+                return '\\u00' + Math.floor(c / 16).toString(16) + (c % 16).toString(16);
+            }) + '"';
+        }
+        return '"' + string + '"';
+    };
+    
+    var _escapeable = /["\\\x00-\x1f\x7f-\x9f]/g;
+    
+    var _meta = {
+        '\b': '\\b',
+        '\t': '\\t',
+        '\n': '\\n',
+        '\f': '\\f',
+        '\r': '\\r',
+        '"' : '\\"',
+        '\\': '\\\\'
+    };
+})(jQuery);
+(function($){
 /**
 @page jquery.model.validations Validations
 @plugin jquery/model/validations
@@ -16970,6 +17165,122 @@ Trend.Base('Trend.Core.Message',
 	 */
 	 //Expose this for fixture debugging
 	 $.fixture.overwrites = overwrites;
+})(jQuery);
+(function() {
+    // break
+    /**
+     * @function jQuery.cookie
+     * @parent dom
+     * @plugin jquery/dom/cookie
+     * @author Klaus Hartl/klaus.hartl@stilbuero.de
+     *
+     *  JavaScriptMVC's packaged cookie plugin is written by
+     *  Klaus Hartl (stilbuero.de)<br />
+	 *  Dual licensed under the MIT and GPL licenses:<br />
+	 *  http://www.opensource.org/licenses/mit-license.php<br />
+	 *  http://www.gnu.org/licenses/gpl.html
+	 *  </p>
+	 *  <p>
+	 *  Create a cookie with the given name and value and other optional parameters.
+	 *  / Get the value of a cookie with the given name.
+	 *  </p>
+	 *  <h3>Quick Examples</h3>
+	 * 
+	 *  Set the value of a cookie.
+	 *  
+	 *     $.cookie('the_cookie', 'the_value');
+	 * 
+	 *  Create a cookie with all available options.
+	 *  @codestart
+	 *  $.cookie('the_cookie', 'the_value',
+	 *  { expires: 7, path: '/', domain: 'jquery.com', secure: true });
+	 *  @codeend
+	 * 
+	 *  Create a session cookie.
+	 *  @codestart
+	 *  $.cookie('the_cookie', 'the_value');
+	 *  @codeend
+	 * 
+	 *  Delete a cookie by passing null as value. Keep in mind that you have to use the same path and domain
+	 *  used when the cookie was set.
+	 *  @codestart
+	 *  $.cookie('the_cookie', null);
+	 *  @codeend
+	 * 
+	 *  Get the value of a cookie.
+	 *  @codestart
+	 *  $.cookie('the_cookie');
+	 *  @codeend
+	 * 
+     *
+     * @param {String} [name] The name of the cookie.
+     * @param {String} [value] The value of the cookie.
+     * @param {Object} [options] An object literal containing key/value pairs to provide optional cookie attributes.<br />
+     * @param {Number|Date} [expires] Either an integer specifying the expiration date from now on in days or a Date object.
+     *                             If a negative value is specified (e.g. a date in the past), the cookie will be deleted.
+     *                             If set to null or omitted, the cookie will be a session cookie and will not be retained
+     *                             when the the browser exits.<br />
+     * @param {String} [path] The value of the path atribute of the cookie (default: path of page that created the cookie).<br />
+     * @param {String} [domain] The value of the domain attribute of the cookie (default: domain of page that created the cookie).<br />
+     * @param {Boolean} secure If true, the secure attribute of the cookie will be set and the cookie transmission will
+     *                        require a secure protocol (like HTTPS).<br />
+     * @return {String} the value of the cookie or {undefined} when setting the cookie.
+     */
+    jQuery.cookie = function(name, value, options) {
+        if (typeof value != 'undefined') { // name and value given, set cookie
+            options = options ||
+            {};
+            if (value === null) {
+                value = '';
+                options.expires = -1;
+            }
+            if (typeof value == 'object' && jQuery.toJSON) {
+                value = jQuery.toJSON(value);
+            }
+            var expires = '';
+            if (options.expires && (typeof options.expires == 'number' || options.expires.toUTCString)) {
+                var date;
+                if (typeof options.expires == 'number') {
+                    date = new Date();
+                    date.setTime(date.getTime() + (options.expires * 24 * 60 * 60 * 1000));
+                }
+                else {
+                    date = options.expires;
+                }
+                expires = '; expires=' + date.toUTCString(); // use expires attribute, max-age is not supported by IE
+            }
+            // CAUTION: Needed to parenthesize options.path and options.domain
+            // in the following expressions, otherwise they evaluate to undefined
+            // in the packed version for some reason...
+            var path = options.path ? '; path=' + (options.path) : '';
+            var domain = options.domain ? '; domain=' + (options.domain) : '';
+            var secure = options.secure ? '; secure' : '';
+            document.cookie = [name, '=', encodeURIComponent(value), expires, path, domain, secure].join('');
+        }
+        else { // only name given, get cookie
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            if (jQuery.evalJSON && cookieValue && cookieValue.match(/^\s*\{/)) {
+                try {
+                    cookieValue = jQuery.evalJSON(cookieValue);
+                }
+                catch (e) {
+                }
+            }
+            return cookieValue;
+        }
+    };
+
 })(jQuery);
 /*!
  * @documentjs-ignore
@@ -29667,26 +29978,59 @@ if ( $.uiBackCompat !== false ) {
 $.Model('Trend.Models.Connection',
 /* @Static */
 {
+	defaults: {
+		enable: true,
+		frequency: 'once',
+		hour: '00',
+		minute: '00',
+		hourly_frequency: 1,
+		daily_frequency: 1,
+		ip: '...'
+	},
+	attributes: {
+		enable: 'boolean'
+	},
 	findAll: "/connections.json",
-  	findOne : "/connections/{id}.json", 
+	findOne : function(attrs, success, error){
+		var self = this;
+		$.fixture.delay = 2000;
+		$.fixture('/fixture/get/'+$.String.underscore(this.shortName)+'/'+attrs.id, function(orig, settings, headers){
+			if($.cookie('connection'))
+			{
+				;
+				return [200, 'success', $.cookie('connection')]
+			}
+			else
+			{
+				return [200, 'success', self.defaults];
+			}
+		});
+		return $.ajax({
+			url: '/fixture/get/'+$.String.underscore(this.shortName)+'/'+attrs.id,
+			dataType: 'json '+$.String.underscore(this.shortName)+'.model',
+			success: success,
+			error: error
+		});
+	}, 
 	create : function(attrs, success, error){
 	},
 	update : function(params, attrs, success, error){
 		var self = this;
 		Trend.Core.Message.instance({message: 'Saving changes, please wait...'});
 		$.fixture.delay = 2000;
-		$.fixture('/fixture/'+$.String.underscore(this.shortName)+'/'+attrs.id, function(orig, settings, headers){
+		$.fixture('/fixture/post/'+$.String.underscore(this.shortName)+'/'+attrs.id, function(orig, settings, headers){
 			var test = new self(attrs);
 			if(test.errors()){
 				return [500, 'error', attrs];
 			}
 			else
 			{
+				$.cookie('connection', attrs);
 				return [200, 'success', attrs];
 			}
 		});
 		return $.ajax({
-			url: '/fixture/'+$.String.underscore(this.shortName)+'/'+attrs.id,
+			url: '/fixture/post/'+$.String.underscore(this.shortName)+'/'+attrs.id,
 			dataType: 'json '+$.String.underscore(this.shortName)+'.model',
 			success: success,
 			error: error
@@ -29696,7 +30040,7 @@ $.Model('Trend.Models.Connection',
 	init: function(){
 		var self = this;
 		this.validate('ip', function(){
-			if(this.enable == 'on' && !self.isIP(this.ip)) {
+			if(this.enable && !self.isIP(this.ip)) {
 				return 'Invalid ip address. IP Address must range from 0 to 255.';
 			}
 		});
@@ -29706,7 +30050,7 @@ $.Model('Trend.Models.Connection',
 		var re=/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/g; 
 		if(re.test(strIP))
 		{
-			if( RegExp.$1 >0 && RegExp.$1 <256 && RegExp.$2<256 && RegExp.$3<256 && RegExp.$4<256){
+			if( RegExp.$1 >0 && RegExp.$1 <256 && RegExp.$2 >=0 && RegExp.$2<256 && RegExp.$3 >=0 && RegExp.$3<256 && RegExp.$4 >=0 && RegExp.$4<256){
 				return true;
 			}
 			return false;
@@ -30115,7 +30459,7 @@ $.Controller('Trend.Core',
 /** @Prototype */
 {
 	init : function(){
-		this.element.html("init.ejs", new Trend.Models.Connection({id: 0}), this.callback('post_render'));
+		this.element.html("init.ejs", Trend.Models.Connection.findOne({id: 0}), this.callback(['post_render','deserialize']));
 	},
 	post_render: function(){
 		this.find('form').tabs({
@@ -30126,10 +30470,72 @@ $.Controller('Trend.Core',
 	'change': function(el, ev){
 		//this.validate();
 	},
-	serialize: function(){
-		var data = this.element.formParams();
+	serialize: function(data){
+		var self = this, data = this.find('form').formParams();
+		var recursive_func = function(prefix, key, value, func){
+			var newKeyName = (prefix == '')? key : prefix+'['+key+']';
+			if (! $.isArray(value) && typeof(value) == 'object'){
+				var subData = {};
+				$.each(value, function(k, v){
+					subData[k] = func(newKeyName, k, v, func);
+				});
+				return subData;
+			}
+			if (self.element.find('[name="'+newKeyName+'"]').is('[type=checkbox]'))
+			{
+				return self.find('[name="'+newKeyName+'"]').prop('checked');
+			}
+			if (self.element.find('[name="'+newKeyName+'"]').is('[type=radio]'))
+			{
+				return self.find('[name="'+newKeyName+'"]:checked').val();
+			}
+			return value;
+		};
+
+		$.each(data, function(key, value){
+			data[key] = recursive_func('', key, value, recursive_func);
+		});
 		data['ip'] = data.oct1+'.'+data.oct2+'.'+data.oct3+'.'+data.oct4;
 		return data;
+	},
+	deserialize: function(){
+		var self = this;
+		var data = this.find('form').model();
+		var recursive_func = function(prefix, key, value, func){
+			var newKeyName = (prefix == '')? key : prefix+'['+key+']';
+			var fel, type , tag;
+			if (! $.isArray(value) && typeof(value) == 'object'){
+				$.each(value, function(k, v){
+					func(newKeyName, k, v, func);
+				});
+				return;
+			}
+			fel = self.element.find('*[name="' + newKeyName + '"]')
+			if (fel.length <= 0)
+				return;
+
+			tag = fel[0].tagName.toLowerCase();
+			if (tag == "select" || tag == "textarea") { //...
+				$(fel).val(value);
+			}
+			else if (tag == "input") {
+				type = $(fel[0]).attr("type");
+				if (type == "text" || type == "password" || type == "hidden") {
+					fel.val(value);
+				}
+				else if (type == "checkbox") {
+					if (value)
+						fel.prop("checked", true);
+				}
+				else if (type == "radio") {
+					fel.filter('[value="'+value+'"]').prop("checked", true);
+				}
+			}
+		};
+		$.each(data, function(key, value){
+			recursive_func('', key, value, recursive_func);
+		});
+		self.dependancy_check();
 	},
 	'button#apply click': function(){
 		this.save();
@@ -30141,7 +30547,8 @@ $.Controller('Trend.Core',
 	},
 	save: function(){
 		this.remove_notify();
-		this.find('form').model().save(this.callback(['remove_notify','save_success']), this.callback(['remove_notify','save_error']));
+		this.find('form').model().attrs(this.serialize());
+		this.find('form').model().update(this.serialize(), this.callback(['remove_notify','save_success']), this.callback(['remove_notify','save_error']));
 	},
 	remove_notify: function(){
 		this.hideErrors();
