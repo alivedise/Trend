@@ -30124,7 +30124,7 @@ $.Controller('Trend.Core',
 		this.element.mxui_layout_modal();
 	},
 	'change': function(el, ev){
-		this.validate();
+		//this.validate();
 	},
 	serialize: function(){
 		var data = this.element.formParams();
@@ -30140,10 +30140,11 @@ $.Controller('Trend.Core',
 		ev.preventDefault();
 	},
 	save: function(){
-		this.find('.ajax_result').remove();
+		this.removeNotify();
 		this.find('form').model().save(this.callback(['remove_notify','save_success']), this.callback(['remove_notify','save_error']));
 	},
 	remove_notify: function(){
+		this.hideErrors();
 		this.find('.ajax_result').remove();
 		Trend.Core.Message.destroy();
 	},
