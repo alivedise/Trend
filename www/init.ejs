@@ -12,10 +12,10 @@
 		<fieldset>
 			<span>To verify the connection by clicking Apply.</span>
 				<div>
-					<%== $.View('/trend/component/checkbox', {name: 'enable', label: 'Enable Scheduled Verification', noli: true, value: true}) %><br/>
+					<%== $.View('component/checkbox', {name: 'enable', label: 'Enable Scheduled Verification', noli: true, value: true}) %><br/>
 					<div class="float">
-						<%== $.View('/trend/component/radio', {name: 'frequency', label: 'Once', value: 'once', current: 'once'}) %><br/>
-						<%== $.View('/trend/component/radio', {name: 'frequency', label: 'Hourly', value: 'hourly', current: 'once'}) %>
+						<%== $.View('component/radio', {name: 'frequency', label: 'Once', value: 'once', current: 'once'}) %><br/>
+						<%== $.View('component/radio', {name: 'frequency', label: 'Hourly', value: 'hourly', current: 'once'}) %>
 						<span>:</span>
 						<span>Every</span>
 						<select id="hour_frequency" name="hourly[frequency]">
@@ -27,7 +27,7 @@
 							<option value=1>12</option>
 						</select>
 						<span>Hours</span><br/>
-						<%== $.View('/trend/component/radio', {name: 'frequency', label: 'Daily', value: 'daily', current: 'once'}) %>
+						<%== $.View('component/radio', {name: 'frequency', label: 'Daily', value: 'daily', current: 'once'}) %>
 						<span>:</span>
 						<span>Every</span>
 						<select id="day_frequency" name="daily[frequency]">
