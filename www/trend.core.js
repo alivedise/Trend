@@ -1849,12 +1849,17 @@ jQuery.extend({
 
 	// A method for determining if a DOM node can handle the data expando
 	acceptData: function( elem ) {
+		try{
 		if ( elem.nodeName ) {
 			var match = jQuery.noData[ elem.nodeName.toLowerCase() ];
 
 			if ( match ) {
 				return !(match === true || elem.getAttribute("classid") !== match);
 			}
+		}
+		}
+		catch(e){
+			debugger;
 		}
 
 		return true;
@@ -9263,7 +9268,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
 
 
-})( window );;
+})( window );
+;
 (function( $ ) {
 	// Several of the methods in this plugin use code adapated from Prototype
 	//  Prototype JavaScript framework, version 1.6.0.1
@@ -10066,6 +10072,9 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 					namespace = current;
 
 				
+				//will consume existing class; try to fix this.
+				//current[shortName] = Class;
+				$.extend(true, Class, current[shortName]);
 				current[shortName] = Class;
 			}
 
@@ -11673,7 +11682,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 		// old - the old value
 		// success - 
 		_updateProperty: function( property, value, old, success, errorCallback ) {
-			var Class = this.constructor,
+			//var Class = this.constructor,
+			var	Class  = this.Class,
 				// the value that we will set
 				val,
 				// the type of the attribute
@@ -12078,209 +12088,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 		}
 
 	};
-})(jQuery);
-(function($){
-/**
-@page jquery.model.validations Validations
-@plugin jquery/model/validations
-@download  http://jmvcsite.heroku.com/pluginify?plugins[]=jquery/model/validations/validations.js
-@test jquery/model/validations/qunit.html
-@parent jQuery.Model
-
-In many apps, it's important to validate data before sending it to the server. 
-The jquery/model/validations plugin provides validations on models.
-
-## Example
-
-To use validations, you need to call a validate method on the Model class.
-The best place to do this is in a Class's init function.
-
-@codestart
-$.Model("Contact",{
-	init : function(){
-		// validates that birthday is in the future
-		this.validate("birthday",function(){
-			if(this.birthday > new Date){
-				return "your birthday needs to be in the past"
-			}
-		})
-	}
-},{});
-@codeend
-
-## Demo
-
-Click a person's name to update their birthday.  If you put the date
-in the future, say the year 2525, it will report back an error.
-
-@demo jquery/model/validations/validations.html
- */
-
-//validations object is by property.  You can have validations that
-//span properties, but this way we know which ones to run.
-//  proc should return true if there's an error or the error message
-var validate = function(attrNames, options, proc) {
-	if(!proc){
-		proc = options;
-		options = {};
-	}
-	options = options || {};
-	attrNames = $.makeArray(attrNames)
-	
-	if(options.testIf && !options.testIf.call(this)){
-		return;
-	}
-	
-	var self = this;
-	$.each(attrNames, function(i, attrName) {
-		// Call the validate proc function in the instance context
-		if(!self.validations[attrName]){
-			self.validations[attrName] = [];
-		}
-		self.validations[attrName].push(function(){
-			var res = proc.call(this, this[attrName]);
-			return res === undefined ? undefined : (options.message || res);
-		})
-	});
-   
-};
-
-$.extend($.Model, {
-   /**
-    * @function jQuery.Model.static.validate
-    * @parent jquery.model.validations
-    * Validates each of the specified attributes with the given function.  See [jquery.model.validations validation] for more on validations.
-    * @param {Array|String} attrNames Attribute name(s) to to validate
-    * @param {Function} validateProc Function used to validate each given attribute. Returns nothing if valid and an error message otherwise. Function is called in the instance context and takes the value to validate.
-    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
-    */
-   validate: validate,
-   
-   /**
-    * @attribute jQuery.Model.static.validationMessages
-    * @parent jquery.model.validations
-    * The default validation error messages that will be returned by the builtin
-    * validation methods. These can be overwritten by assigning new messages
-    * to $.Model.validationMessages.&lt;message> in your application setup.
-    * 
-    * The following messages (with defaults) are available:
-    * 
-    *  * format - "is invalid"
-    *  * inclusion - "is not a valid option (perhaps out of range)"
-    *  * lengthShort - "is too short"
-    *  * lengthLong - "is too long"
-    *  * presence - "can't be empty"
-    *  * range - "is out of range"
-    * 
-    * It is important to steal jquery/model/validations before 
-    * overwriting the messages, otherwise the changes will
-    * be lost once steal loads it later.
-    * 
-    * ## Example
-    * 
-    *     $.Model.validationMessages.format = "is invalid dummy!"
-    */
-   validationMessages : {
-       format      : "is invalid",
-       inclusion   : "is not a valid option (perhaps out of range)",
-       lengthShort : "is too short",
-       lengthLong  : "is too long",
-       presence    : "can't be empty",
-       range       : "is out of range"
-   },
-
-   /**
-    * @function jQuery.Model.static.validateFormatOf
-    * @parent jquery.model.validations
-    * Validates where the values of specified attributes are of the correct form by
-    * matching it against the regular expression provided.  See [jquery.model.validations validation] for more on validations.
-    * @param {Array|String} attrNames Attribute name(s) to to validate
-    * @param {RegExp} regexp Regular expression used to match for validation
-    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
-    *
-    */
-   validateFormatOf: function(attrNames, regexp, options) {
-      validate.call(this, attrNames, options, function(value) {
-         if(  (typeof value != 'undefined' && value != '')
-         	&& String(value).match(regexp) == null )
-         {
-            return this.Class.validationMessages.format;
-         }
-      });
-   },
-
-   /**
-    * @function jQuery.Model.static.validateInclusionOf
-    * @parent jquery.model.validations
-    * Validates whether the values of the specified attributes are available in a particular
-    * array.   See [jquery.model.validations validation] for more on validations.
-    * @param {Array|String} attrNames Attribute name(s) to to validate
-    * @param {Array} inArray Array of options to test for inclusion
-    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
-    * 
-    */
-   validateInclusionOf: function(attrNames, inArray, options) {
-      validate.call(this, attrNames, options, function(value) {
-         if(typeof value == 'undefined')
-            return;
-
-         if($.grep(inArray, function(elm) { return (elm == value);}).length == 0)
-            return this.Class.validationMessages.inclusion;
-      });
-   },
-
-   /**
-    * @function jQuery.Model.static.validateLengthOf
-    * @parent jquery.model.validations
-    * Validates that the specified attributes' lengths are in the given range.  See [jquery.model.validations validation] for more on validations.
-    * @param {Array|String} attrNames Attribute name(s) to to validate
-    * @param {Number} min Minimum length (inclusive)
-    * @param {Number} max Maximum length (inclusive)
-    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
-    *
-    */
-   validateLengthOf: function(attrNames, min, max, options) {
-      validate.call(this, attrNames, options, function(value) {
-         if((typeof value == 'undefined' && min > 0) || value.length < min)
-            return this.Class.validationMessages.lengthShort + " (min=" + min + ")";
-         else if(typeof value != 'undefined' && value.length > max)
-            return this.Class.validationMessages.lengthLong + " (max=" + max + ")";
-      });
-   },
-
-   /**
-    * @function jQuery.Model.static.validatePresenceOf
-    * @parent jquery.model.validations
-    * Validates that the specified attributes are not blank.  See [jquery.model.validations validation] for more on validations.
-    * @param {Array|String} attrNames Attribute name(s) to to validate
-    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
-    *
-    */
-   validatePresenceOf: function(attrNames, options) {
-      validate.call(this, attrNames, options, function(value) {
-         if(typeof value == 'undefined' || value == "" || value === null)
-            return this.Class.validationMessages.presence;
-      });
-   },
-
-   /**
-    * @function jQuery.Model.static.validateRangeOf
-    * @parent jquery.model.validations
-    * Validates that the specified attributes are in the given numeric range.  See [jquery.model.validations validation] for more on validations.
-    * @param {Array|String} attrNames Attribute name(s) to to validate
-    * @param {Number} low Minimum value (inclusive)
-    * @param {Number} hi Maximum value (inclusive)
-    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
-    *
-    */
-   validateRangeOf: function(attrNames, low, hi, options) {
-      validate.call(this, attrNames, options, function(value) {
-         if(typeof value != 'undefined' && value < low || value > hi)
-            return this.Class.validationMessages.range + " [" + low + "," + hi + "]";
-      });
-   }
-});
-
 })(jQuery);
 (function( $ ) {
 
@@ -13197,7 +13004,3975 @@ $.extend($.Model, {
 		return retArr;
 	};
 })(jQuery);
+(function( $ ) {
+	// ------- HELPER FUNCTIONS  ------
+	
+	// Binds an element, returns a function that unbinds
+	var bind = function( el, ev, callback ) {
+		var wrappedCallback,
+			binder = el.bind && el.unbind ? el : $(isFunction(el) ? [el] : el);
+		//this is for events like >click.
+		if ( ev.indexOf(">") === 0 ) {
+			ev = ev.substr(1);
+			wrappedCallback = function( event ) {
+				if ( event.target === el ) {
+					callback.apply(this, arguments);
+				} 
+			};
+		}
+		binder.bind(ev, wrappedCallback || callback);
+		// if ev name has >, change the name and bind
+		// in the wrapped callback, check that the element matches the actual element
+		return function() {
+			binder.unbind(ev, wrappedCallback || callback);
+			el = ev = callback = wrappedCallback = null;
+		};
+	},
+		makeArray = $.makeArray,
+		isArray = $.isArray,
+		isFunction = $.isFunction,
+		extend = $.extend,
+		Str = $.String,
+		each = $.each,
+		
+		STR_PROTOTYPE = 'prototype',
+		STR_CONSTRUCTOR = 'constructor',
+		slice = Array[STR_PROTOTYPE].slice,
+		
+		// Binds an element, returns a function that unbinds
+		delegate = function( el, selector, ev, callback ) {
+			var binder = el.delegate && el.undelegate ? el : $(isFunction(el) ? [el] : el)
+			binder.delegate(selector, ev, callback);
+			return function() {
+				binder.undelegate(selector, ev, callback);
+				binder = el = ev = callback = selector = null;
+			};
+		},
+		
+		// calls bind or unbind depending if there is a selector
+		binder = function( el, ev, callback, selector ) {
+			return selector ? delegate(el, selector, ev, callback) : bind(el, ev, callback);
+		},
+		
+		// moves 'this' to the first argument, wraps it with jQuery if it's an element
+		shifter = function shifter(context, name) {
+			var method = typeof name == "string" ? context[name] : name;
+			return function() {
+				context.called = name;
+    			return method.apply(context, [this.nodeName ? $(this) : this].concat( slice.call(arguments, 0) ) );
+			};
+		},
+		// matches dots
+		dotsReg = /\./g,
+		// matches controller
+		controllersReg = /_?controllers?/ig,
+		//used to remove the controller from the name
+		underscoreAndRemoveController = function( className ) {
+			return Str.underscore(className.replace("jQuery.", "").replace(dotsReg, '_').replace(controllersReg, ""));
+		},
+		// checks if it looks like an action
+		actionMatcher = /[^\w]/,
+		// handles parameterized action names
+		parameterReplacer = /\{([^\}]+)\}/g,
+		breaker = /^(?:(.*?)\s)?([\w\.\:>]+)$/,
+		basicProcessor,
+		data = function(el, data){
+			return $.data(el, "controllers", data)
+		};
+	/**
+	 * @class jQuery.Controller
+	 * @parent jquerymx
+	 * @plugin jquery/controller
+	 * @download  http://jmvcsite.heroku.com/pluginify?plugins[]=jquery/controller/controller.js
+	 * @test jquery/controller/qunit.html
+	 * @inherits jQuery.Class
+	 * @description jQuery widget factory.
+	 * 
+	 * jQuery.Controller helps create organized, memory-leak free, rapidly performing
+	 * jQuery widgets.  Its extreme flexibility allows it to serve as both
+	 * a traditional View and a traditional Controller.  
+	 * 
+	 * This means it is used to
+	 * create things like tabs, grids, and contextmenus as well as 
+	 * organizing them into higher-order business rules.
+	 * 
+	 * Controllers make your code deterministic, reusable, organized and can tear themselves 
+	 * down auto-magically. Read about [http://jupiterjs.com/news/writing-the-perfect-jquery-plugin 
+	 * the theory behind controller] and 
+	 * a [http://jupiterjs.com/news/organize-jquery-widgets-with-jquery-controller walkthrough of its features]
+	 * on Jupiter's blog. [mvc.controller Get Started with jQueryMX] also has a great walkthrough.
+	 * 
+	 * Controller inherits from [jQuery.Class $.Class] and makes heavy use of 
+	 * [http://api.jquery.com/delegate/ event delegation]. Make sure 
+	 * you understand these concepts before using it.
+	 * 
+	 * ## Basic Example
+	 * 
+	 * Instead of
+	 * 
+	 * 
+	 *     $(function(){
+	 *       $('#tabs').click(someCallbackFunction1)
+	 *       $('#tabs .tab').click(someCallbackFunction2)
+	 *       $('#tabs .delete click').click(someCallbackFunction3)
+	 *     });
+	 * 
+	 * do this
+	 * 
+	 *     $.Controller('Tabs',{
+	 *       click: function() {...},
+	 *       '.tab click' : function() {...},
+	 *       '.delete click' : function() {...}
+	 *     })
+	 *     $('#tabs').tabs();
+	 * 
+	 * 
+	 * ## Tabs Example
+	 * 
+	 * @demo jquery/controller/controller.html
+	 * 
+	 * ## Using Controller
+	 * 
+	 * Controller helps you build and organize jQuery plugins.  It can be used
+	 * to build simple widgets, like a slider, or organize multiple
+	 * widgets into something greater.
+	 * 
+	 * To understand how to use Controller, you need to understand 
+	 * the typical lifecycle of a jQuery widget and how that maps to
+	 * controller's functionality:
+	 * 
+	 * ### A controller class is created.
+	 *       
+	 *     $.Controller("MyWidget",
+	 *     {
+	 *       defaults :  {
+	 *         message : "Remove Me"
+	 *       }
+	 *     },
+	 *     {
+	 *       init : function(rawEl, rawOptions){ 
+	 *         this.element.append(
+	 *            "<div>"+this.options.message+"</div>"
+	 *           );
+	 *       },
+	 *       "div click" : function(div, ev){ 
+	 *         div.remove();
+	 *       }  
+	 *     }) 
+	 *     
+	 * This creates a <code>$.fn.my_widget</code> jQuery helper function
+	 * that can be used to create a new controller instance on an element. Find
+	 * more information [jquery.controller.plugin  here] about the plugin gets created 
+	 * and the rules around its name.
+	 *       
+	 * ### An instance of controller is created on an element
+	 * 
+	 *     $('.thing').my_widget(options) // calls new MyWidget(el, options)
+	 * 
+	 * This calls <code>new MyWidget(el, options)</code> on 
+	 * each <code>'.thing'</code> element.  
+	 *     
+	 * When a new [jQuery.Class Class] instance is created, it calls the class's
+	 * prototype setup and init methods. Controller's [jQuery.Controller.prototype.setup setup]
+	 * method:
+	 *     
+	 *  - Sets [jQuery.Controller.prototype.element this.element] and adds the controller's name to element's className.
+	 *  - Merges passed in options with defaults object and sets it as [jQuery.Controller.prototype.options this.options]
+	 *  - Saves a reference to the controller in <code>$.data</code>.
+	 *  - [jquery.controller.listening Binds all event handler methods].
+	 *   
+	 * 
+	 * ### The controller responds to events
+	 * 
+	 * Typically, Controller event handlers are automatically bound.  However, there are
+	 * multiple ways to [jquery.controller.listening listen to events] with a controller.
+	 * 
+	 * Once an event does happen, the callback function is always called with 'this' 
+	 * referencing the controller instance.  This makes it easy to use helper functions and
+	 * save state on the controller.
+	 * 
+	 * 
+	 * ### The widget is destroyed
+	 * 
+	 * If the element is removed from the page, the 
+	 * controller's [jQuery.Controller.prototype.destroy] method is called.
+	 * This is a great place to put any additional teardown functionality.
+	 * 
+	 * You can also teardown a controller programatically like:
+	 * 
+	 *     $('.thing').my_widget('destroy');
+	 * 
+	 * ## Todos Example
+	 * 
+	 * Lets look at a very basic example - 
+	 * a list of todos and a button you want to click to create a new todo.
+	 * Your HTML might look like:
+	 * 
+	 * @codestart html
+	 * &lt;div id='todos'>
+	 *  &lt;ol>
+	 *    &lt;li class="todo">Laundry&lt;/li>
+	 *    &lt;li class="todo">Dishes&lt;/li>
+	 *    &lt;li class="todo">Walk Dog&lt;/li>
+	 *  &lt;/ol>
+	 *  &lt;a class="create">Create&lt;/a>
+	 * &lt;/div>
+	 * @codeend
+	 * 
+	 * To add a mousover effect and create todos, your controller might look like:
+	 * 
+	 *     $.Controller('Todos',{
+	 *       ".todo mouseover" : function( el, ev ) {
+	 *         el.css("backgroundColor","red")
+	 *       },
+	 *       ".todo mouseout" : function( el, ev ) {
+	 *         el.css("backgroundColor","")
+	 *       },
+	 *       ".create click" : function() {
+	 *         this.find("ol").append("<li class='todo'>New Todo</li>"); 
+	 *       }
+	 *     })
+	 * 
+	 * Now that you've created the controller class, you've must attach the event handlers on the '#todos' div by
+	 * creating [jQuery.Controller.prototype.setup|a new controller instance].  There are 2 ways of doing this.
+	 * 
+	 * @codestart
+	 * //1. Create a new controller directly:
+	 * new Todos($('#todos'));
+	 * //2. Use jQuery function
+	 * $('#todos').todos();
+	 * @codeend
+	 * 
+	 * ## Controller Initialization
+	 * 
+	 * It can be extremely useful to add an init method with 
+	 * setup functionality for your widget.
+	 * 
+	 * In the following example, I create a controller that when created, will put a message as the content of the element:
+	 * 
+	 *     $.Controller("SpecialController",
+	 *     {
+	 *       init: function( el, message ) {
+	 *         this.element.html(message)
+	 *       }
+	 *     })
+	 *     $(".special").special("Hello World")
+	 * 
+	 * ## Removing Controllers
+	 * 
+	 * Controller removal is built into jQuery.  So to remove a controller, you just have to remove its element:
+	 * 
+	 * @codestart
+	 * $(".special_controller").remove()
+	 * $("#containsControllers").html("")
+	 * @codeend
+	 * 
+	 * It's important to note that if you use raw DOM methods (<code>innerHTML, removeChild</code>), the controllers won't be destroyed.
+	 * 
+	 * If you just want to remove controller functionality, call destroy on the controller instance:
+	 * 
+	 * @codestart
+	 * $(".special_controller").controller().destroy()
+	 * @codeend
+	 * 
+	 * ## Accessing Controllers
+	 * 
+	 * Often you need to get a reference to a controller, there are a few ways of doing that.  For the 
+	 * following example, we assume there are 2 elements with <code>className="special"</code>.
+	 * 
+	 * @codestart
+	 * //creates 2 foo controllers
+	 * $(".special").foo()
+	 * 
+	 * //creates 2 bar controllers
+	 * $(".special").bar()
+	 * 
+	 * //gets all controllers on all elements:
+	 * $(".special").controllers() //-> [foo, bar, foo, bar]
+	 * 
+	 * //gets only foo controllers
+	 * $(".special").controllers(FooController) //-> [foo, foo]
+	 * 
+	 * //gets all bar controllers
+	 * $(".special").controllers(BarController) //-> [bar, bar]
+	 * 
+	 * //gets first controller
+	 * $(".special").controller() //-> foo
+	 * 
+	 * //gets foo controller via data
+	 * $(".special").data("controllers")["FooController"] //-> foo
+	 * @codeend
+	 * 
+	 * ## Calling methods on Controllers
+	 * 
+	 * Once you have a reference to an element, you can call methods on it.  However, Controller has
+	 * a few shortcuts:
+	 * 
+	 * @codestart
+	 * //creates foo controller
+	 * $(".special").foo({name: "value"})
+	 * 
+	 * //calls FooController.prototype.update
+	 * $(".special").foo({name: "value2"})
+	 * 
+	 * //calls FooController.prototype.bar
+	 * $(".special").foo("bar","something I want to pass")
+	 * @codeend
+	 * 
+	 * These methods let you call one controller from another controller.
+	 * 
+	 */
+	$.Class("jQuery.Controller",
+	/** 
+	 * @Static
+	 */
+	{
+		/**
+		 * Does 2 things:
+		 * 
+		 *   - Creates a jQuery helper for this controller.</li>
+		 *   - Calculates and caches which functions listen for events.</li>
+		 *    
+		 * ### jQuery Helper Naming Examples
+		 * 
+		 * 
+		 *     "TaskController" -> $().task_controller()
+		 *     "Controllers.Task" -> $().controllers_task()
+		 * 
+		 */
+		setup: function() {
+			// Allow contollers to inherit "defaults" from superclasses as it done in $.Class
+			this._super.apply(this, arguments);
+
+			// if you didn't provide a name, or are controller, don't do anything
+			if (!this.shortName || this.fullName == "jQuery.Controller" ) {
+				return;
+			}
+			// cache the underscored names
+			this._fullName = underscoreAndRemoveController(this.fullName);
+			this._shortName = underscoreAndRemoveController(this.shortName);
+
+			var controller = this,
+				/**
+				 * @attribute pluginName
+				 * Setting the <code>pluginName</code> property allows you
+				 * to change the jQuery plugin helper name from its 
+				 * default value.
+				 * 
+				 *     $.Controller("Mxui.Layout.Fill",{
+				 *       pluginName: "fillWith"
+				 *     },{});
+				 *     
+				 *     $("#foo").fillWith();
+				 */
+				pluginname = this.pluginName || this._fullName,
+				funcName, forLint;
+
+			// create jQuery plugin
+			if (!$.fn[pluginname] ) {
+				$.fn[pluginname] = function( options ) {
+
+					var args = makeArray(arguments),
+						//if the arg is a method on this controller
+						isMethod = typeof options == "string" && isFunction(controller[STR_PROTOTYPE][options]),
+						meth = args[0];
+					return this.each(function() {
+						//check if created
+						var controllers = data(this),
+							//plugin is actually the controller instance
+							plugin = controllers && controllers[pluginname];
+
+						if ( plugin ) {
+							if ( isMethod ) {
+								// call a method on the controller with the remaining args
+								plugin[meth].apply(plugin, args.slice(1));
+							} else {
+								// call the plugin's update method
+								plugin.update.apply(plugin, args);
+							}
+
+						} else {
+							//create a new controller instance
+							controller.newInstance.apply(controller, [this].concat(args));
+						}
+					});
+				};
+			}
+
+			// make sure listensTo is an array
+			
+			// calculate and cache actions
+			this.actions = {};
+
+			for ( funcName in this[STR_PROTOTYPE] ) {
+				if (funcName == 'constructor' || !isFunction(this[STR_PROTOTYPE][funcName]) ) {
+					continue;
+				}
+				if ( this._isAction(funcName) ) {
+					this.actions[funcName] = this._action(funcName);
+				}
+			}
+		},
+		hookup: function( el ) {
+			return new this(el);
+		},
+
+		/**
+		 * @hide
+		 * @param {String} methodName a prototype function
+		 * @return {Boolean} truthy if an action or not
+		 */
+		_isAction: function( methodName ) {
+			if ( actionMatcher.test(methodName) ) {
+				return true;
+			} else {
+				return $.inArray(methodName, this.listensTo) > -1 || $.event.special[methodName] || processors[methodName];
+			}
+
+		},
+		/**
+		 * @hide
+		 * This takes a method name and the options passed to a controller
+		 * and tries to return the data necessary to pass to a processor
+		 * (something that binds things).
+		 * 
+		 * For performance reasons, this called twice.  First, it is called when 
+		 * the Controller class is created.  If the methodName is templated
+		 * like : "{window} foo", it returns null.  If it is not templated
+		 * it returns event binding data.
+		 * 
+		 * The resulting data is added to this.actions.
+		 * 
+		 * When a controller instance is created, _action is called again, but only
+		 * on templated actions.  
+		 * 
+		 * @param {Object} methodName the method that will be bound
+		 * @param {Object} [options] first param merged with class default options
+		 * @return {Object} null or the processor and pre-split parts.  
+		 * The processor is what does the binding/subscribing.
+		 */
+		_action: function( methodName, options ) {
+			// reset the test index
+			parameterReplacer.lastIndex = 0;
+			
+			//if we don't have options (a controller instance), we'll run this later
+			if (!options && parameterReplacer.test(methodName) ) {
+				return null;
+			}
+			// If we have options, run sub to replace templates "{}" with a value from the options
+			// or the window
+			var convertedName = options ? Str.sub(methodName, [options, window]) : methodName,
+				
+				// If a "{}" resolves to an object, convertedName will be an array
+				arr = isArray(convertedName),
+				
+				// get the parts of the function = [convertedName, delegatePart, eventPart]
+				parts = (arr ? convertedName[1] : convertedName).match(breaker),
+				event = parts[2],
+				processor = processors[event] || basicProcessor;
+			return {
+				processor: processor,
+				parts: parts,
+				delegate : arr ? convertedName[0] : undefined
+			};
+		},
+		/**
+		 * @attribute processors
+		 * An object of {eventName : function} pairs that Controller uses to hook up events
+		 * auto-magically.  A processor function looks like:
+		 * 
+		 *     jQuery.Controller.processors.
+		 *       myprocessor = function( el, event, selector, cb, controller ) {
+		 *          //el - the controller's element
+		 *          //event - the event (myprocessor)
+		 *          //selector - the left of the selector
+		 *          //cb - the function to call
+		 *          //controller - the binding controller
+		 *       };
+		 * 
+		 * This would bind anything like: "foo~3242 myprocessor".
+		 * 
+		 * The processor must return a function that when called, 
+		 * unbinds the event handler.
+		 * 
+		 * Controller already has processors for the following events:
+		 * 
+		 *   - change 
+		 *   - click 
+		 *   - contextmenu 
+		 *   - dblclick 
+		 *   - focusin
+		 *   - focusout
+		 *   - keydown 
+		 *   - keyup 
+		 *   - keypress 
+		 *   - mousedown 
+		 *   - mouseenter
+		 *   - mouseleave
+		 *   - mousemove 
+		 *   - mouseout 
+		 *   - mouseover 
+		 *   - mouseup 
+		 *   - reset 
+		 *   - resize 
+		 *   - scroll 
+		 *   - select 
+		 *   - submit  
+		 * 
+		 * Listen to events on the document or window 
+		 * with templated event handlers:
+		 * 
+		 *
+		 *     $.Controller('Sized',{
+		 *       "{window} resize" : function(){
+		 *         this.element.width(this.element.parent().width() / 2);
+		 *       }
+		 *     });
+		 *     
+		 *     $('.foo').sized();
+		 */
+		processors: {},
+		/**
+		 * @attribute listensTo
+		 * An array of special events this controller 
+		 * listens too.  You only need to add event names that
+		 * are whole words (ie have no special characters).
+		 * 
+		 *     $.Controller('TabPanel',{
+		 *       listensTo : ['show']
+		 *     },{
+		 *       'show' : function(){
+		 *         this.element.show();
+		 *       }
+		 *     })
+		 *     
+		 *     $('.foo').tab_panel().trigger("show");
+		 * 
+		 */
+		listensTo: [],
+		/**
+		 * @attribute defaults
+		 * A object of name-value pairs that act as default values for a controller's 
+		 * [jQuery.Controller.prototype.options options].
+		 * 
+		 *     $.Controller("Message",
+		 *     {
+		 *       defaults : {
+		 *         message : "Hello World"
+		 *       }
+		 *     },{
+		 *       init : function(){
+		 *         this.element.text(this.options.message);
+		 *       }
+		 *     })
+		 *     
+		 *     $("#el1").message(); //writes "Hello World"
+		 *     $("#el12").message({message: "hi"}); //writes hi
+		 *     
+		 * In [jQuery.Controller.prototype.setup setup] the options passed to the controller
+		 * are merged with defaults.  This is not a deep merge.
+		 */
+		defaults: {}
+	},
+	/** 
+	 * @Prototype
+	 */
+	{
+		/**
+		 * Setup is where most of controller's magic happens.  It does the following:
+		 * 
+		 * ### 1. Sets this.element
+		 * 
+		 * The first parameter passed to new Controller(el, options) is expected to be 
+		 * an element.  This gets converted to a jQuery wrapped element and set as
+		 * [jQuery.Controller.prototype.element this.element].
+		 * 
+		 * ### 2. Adds the controller's name to the element's className.
+		 * 
+		 * Controller adds it's plugin name to the element's className for easier 
+		 * debugging.  For example, if your Controller is named "Foo.Bar", it adds
+		 * "foo_bar" to the className.
+		 * 
+		 * ### 3. Saves the controller in $.data
+		 * 
+		 * A reference to the controller instance is saved in $.data.  You can find 
+		 * instances of "Foo.Bar" like: 
+		 * 
+		 *     $("#el").data("controllers")['foo_bar'].
+		 * 
+		 * ### Binds event handlers
+		 * 
+		 * Setup does the event binding described in [jquery.controller.listening Listening To Events].
+		 * 
+		 * @param {HTMLElement} element the element this instance operates on.
+		 * @param {Object} [options] option values for the controller.  These get added to
+		 * this.options and merged with [jQuery.Controller.static.defaults defaults].
+		 * @return {Array} return an array if you wan to change what init is called with. By
+		 * default it is called with the element and options passed to the controller.
+		 */
+		setup: function( element, options ) {
+			var funcName, ready, cls = this[STR_CONSTRUCTOR];
+
+			//want the raw element here
+			element = (typeof element == 'string' ? $(element) :
+				(element.jquery ? element : [element]) )[0];
+
+			//set element and className on element
+			var pluginname = cls.pluginName || cls._fullName;
+
+			//set element and className on element
+			this.element = $(element).addClass(pluginname);
+
+			//set in data
+			(data(element) || data(element, {}))[pluginname] = this;
+
+			
+			/**
+			 * @attribute options
+			 * 
+			 * Options are used to configure an controller.  They are
+			 * the 2nd argument
+			 * passed to a controller (or the first argument passed to the 
+			 * [jquery.controller.plugin controller's jQuery plugin]).
+			 * 
+			 * For example:
+			 * 
+			 *     $.Controller('Hello')
+			 *     
+			 *     var h1 = new Hello($('#content1'), {message: 'World'} );
+			 *     equal( h1.options.message , "World" )
+			 *     
+			 *     var h2 = $('#content2').hello({message: 'There'})
+			 *                            .controller();
+			 *     equal( h2.options.message , "There" )
+			 * 
+			 * Options are merged with [jQuery.Controller.static.defaults defaults] in
+			 * [jQuery.Controller.prototype.setup setup].
+			 * 
+			 * For example:
+			 * 
+			 *     $.Controller("Tabs", 
+			 *     {
+			 *        defaults : {
+			 *          activeClass: "ui-active-state"
+			 *        }
+			 *     },
+			 *     {
+			 *        init : function(){
+			 *          this.element.addClass(this.options.activeClass);
+			 *        }
+			 *     })
+			 *     
+			 *     $("#tabs1").tabs()                         // adds 'ui-active-state'
+			 *     $("#tabs2").tabs({activeClass : 'active'}) // adds 'active'
+			 *     
+			 * Options are typically updated by calling 
+			 * [jQuery.Controller.prototype.update update];
+			 *
+			 */
+			this.options = extend( extend(true, {}, cls.defaults), options);
+
+			
+
+			/**
+			 * @attribute called
+			 * String name of current function being called on controller instance.  This is 
+			 * used for picking the right view in render.
+			 * @hide
+			 */
+			this.called = "init";
+
+			// bind all event handlers
+			this.bind();
+
+			/**
+			 * @attribute element
+			 * The controller instance's delegated element. This 
+			 * is set by [jQuery.Controller.prototype.setup setup]. It 
+			 * is a jQuery wrapped element.
+			 * 
+			 * For example, if I add MyWidget to a '#myelement' element like:
+			 * 
+			 *     $.Controller("MyWidget",{
+			 *       init : function(){
+			 *         this.element.css("color","red")
+			 *       }
+			 *     })
+			 *     
+			 *     $("#myelement").my_widget()
+			 * 
+			 * MyWidget will turn #myelement's font color red.
+			 * 
+			 * ## Using a different element.
+			 * 
+			 * Sometimes, you want a different element to be this.element.  A
+			 * very common example is making progressively enhanced form widgets.
+			 * 
+			 * To change this.element, overwrite Controller's setup method like:
+			 * 
+			 *     $.Controller("Combobox",{
+			 *       setup : function(el, options){
+			 *          this.oldElement = $(el);
+			 *          var newEl = $('<div/>');
+			 *          this.oldElement.wrap(newEl);
+			 *          this._super(newEl, options);
+			 *       },
+			 *       init : function(){
+			 *          this.element //-> the div
+			 *       },
+			 *       ".option click" : function(){
+			 *         // event handler bound on the div
+			 *       },
+			 *       destroy : function(){
+			 *          var div = this.element; //save reference
+			 *          this._super();
+			 *          div.replaceWith(this.oldElement);
+			 *       }
+			 *     }
+			 */
+			return [this.element, this.options].concat(makeArray(arguments).slice(2));
+			/**
+			 * @function init
+			 * 
+			 * Implement this.
+			 */
+		},
+		/**
+		 * Bind attaches event handlers that will be 
+		 * removed when the controller is removed.  
+		 * 
+		 * This used to be a good way to listen to events outside the controller's
+		 * [jQuery.Controller.prototype.element element].  However,
+		 * using templated event listeners is now the prefered way of doing this.
+		 * 
+		 * ### Example:
+		 * 
+		 *     init: function() {
+		 *        // calls somethingClicked(el,ev)
+		 *        this.bind('click','somethingClicked') 
+		 *     
+		 *        // calls function when the window is clicked
+		 *        this.bind(window, 'click', function(ev){
+		 *          //do something
+		 *        })
+		 *     },
+		 *     somethingClicked: function( el, ev ) {
+		 *       
+		 *     }
+		 * 
+		 * @param {HTMLElement|jQuery.fn|Object} [el=this.element] 
+		 * The element to be bound.  If an eventName is provided,
+		 * the controller's element is used instead.
+		 * 
+		 * @param {String} eventName The event to listen for.
+		 * @param {Function|String} func A callback function or the String name of a controller function.  If a controller
+		 * function name is given, the controller function is called back with the bound element and event as the first
+		 * and second parameter.  Otherwise the function is called back like a normal bind.
+		 * @return {Integer} The id of the binding in this._bindings
+		 */
+		bind: function( el, eventName, func ) {
+			if( el === undefined ) {
+				//adds bindings
+				this._bindings = [];
+				//go through the cached list of actions and use the processor to bind
+				
+				var cls = this[STR_CONSTRUCTOR],
+					bindings = this._bindings,
+					actions = cls.actions,
+					element = this.element;
+					
+				for ( funcName in actions ) {
+					if ( actions.hasOwnProperty(funcName) ) {
+						ready = actions[funcName] || cls._action(funcName, this.options);
+						bindings.push(
+							ready.processor(ready.delegate || element, 
+							                ready.parts[2], 
+											ready.parts[1], 
+											funcName, 
+											this));
+					}
+				}
+	
+	
+				//setup to be destroyed ... don't bind b/c we don't want to remove it
+				var destroyCB = shifter(this,"destroy");
+				element.bind("destroyed", destroyCB);
+				bindings.push(function( el ) {
+					$(el).unbind("destroyed", destroyCB);
+				});
+				return bindings.length;
+			}
+			if ( typeof el == 'string' ) {
+				func = eventName;
+				eventName = el;
+				el = this.element;
+			}
+			return this._binder(el, eventName, func);
+		},
+		_binder: function( el, eventName, func, selector ) {
+			if ( typeof func == 'string' ) {
+				func = shifter(this,func);
+			}
+			this._bindings.push(binder(el, eventName, func, selector));
+			return this._bindings.length;
+		},
+		_unbind : function(){
+			var el = this.element[0];
+			each(this._bindings, function( key, value ) {
+				value(el);
+			});
+			//adds bindings
+			this._bindings = [];
+		},
+		/**
+		 * Delegate will delegate on an elememt and will be undelegated when the controller is removed.
+		 * This is a good way to delegate on elements not in a controller's element.<br/>
+		 * <h3>Example:</h3>
+		 * @codestart
+		 * // calls function when the any 'a.foo' is clicked.
+		 * this.delegate(document.documentElement,'a.foo', 'click', function(ev){
+		 *   //do something
+		 * })
+		 * @codeend
+		 * @param {HTMLElement|jQuery.fn} [element=this.element] the element to delegate from
+		 * @param {String} selector the css selector
+		 * @param {String} eventName the event to bind to
+		 * @param {Function|String} func A callback function or the String name of a controller function.  If a controller
+		 * function name is given, the controller function is called back with the bound element and event as the first
+		 * and second parameter.  Otherwise the function is called back like a normal bind.
+		 * @return {Integer} The id of the binding in this._bindings
+		 */
+		delegate: function( element, selector, eventName, func ) {
+			if ( typeof element == 'string' ) {
+				func = eventName;
+				eventName = selector;
+				selector = element;
+				element = this.element;
+			}
+			return this._binder(element, eventName, func, selector);
+		},
+		/**
+		 * Update extends [jQuery.Controller.prototype.options this.options] 
+		 * with the `options` argument and rebinds all events.  It basically
+		 * re-configures the controller.
+		 * 
+		 * For example, the following controller wraps a recipe form. When the form
+		 * is submitted, it creates the recipe on the server.  When the recipe
+		 * is `created`, it resets the form with a new instance.
+		 * 
+		 *     $.Controller('Creator',{
+		 *       "{recipe} created" : function(){
+		 *         this.update({recipe : new Recipe()});
+		 *         this.element[0].reset();
+		 *         this.find("[type=submit]").val("Create Recipe")
+		 *       },
+		 *       "submit" : function(el, ev){
+		 *         ev.preventDefault();
+		 *         var recipe = this.options.recipe;
+		 *         recipe.attrs( this.element.formParams() );
+		 *         this.find("[type=submit]").val("Saving...")
+		 *         recipe.save();
+		 *       }
+		 *     });
+		 *     $('#createRecipes').creator({recipe : new Recipe()})
+		 * 
+		 * 
+		 * @demo jquery/controller/demo-update.html
+		 * 
+		 * Update is called if a controller's [jquery.controller.plugin jQuery helper] is 
+		 * called on an element that already has a controller instance
+		 * of the same type. 
+		 * 
+		 * For example, a widget that listens for model updates
+		 * and updates it's html would look like.  
+		 * 
+		 *     $.Controller('Updater',{
+		 *       // when the controller is created, update the html
+		 *       init : function(){
+		 *         this.updateView();
+		 *       },
+		 *       
+		 *       // update the html with a template
+		 *       updateView : function(){
+		 *         this.element.html( "content.ejs",
+		 *                            this.options.model ); 
+		 *       },
+		 *       
+		 *       // if the model is updated
+		 *       "{model} updated" : function(){
+		 *         this.updateView();
+		 *       },
+		 *       update : function(options){
+		 *         // make sure you call super
+		 *         this._super(options);
+		 *          
+		 *         this.updateView();
+		 *       }
+		 *     })
+		 * 
+		 *     // create the controller
+		 *     // this calls init
+		 *     $('#item').updater({model: recipe1});
+		 *     
+		 *     // later, update that model
+		 *     // this calls "{model} updated"
+		 *     recipe1.update({name: "something new"});
+		 *     
+		 *     // later, update the controller with a new recipe
+		 *     // this calls update
+		 *     $('#item').updater({model: recipe2});
+		 *     
+		 *     // later, update the new model
+		 *     // this calls "{model} updated"
+		 *     recipe2.update({name: "something newer"});
+		 * 
+		 * _NOTE:_ If you overwrite `update`, you probably need to call
+		 * this._super.
+		 * 
+		 * ### Example
+		 * 
+		 *     $.Controller("Thing",{
+		 *       init: function( el, options ) {
+		 *         alert( 'init:'+this.options.prop )
+		 *       },
+		 *       update: function( options ) {
+		 *         this._super(options);
+		 *         alert('update:'+this.options.prop)
+		 *       }
+		 *     });
+		 *     $('#myel').thing({prop : 'val1'}); // alerts init:val1
+		 *     $('#myel').thing({prop : 'val2'}); // alerts update:val2
+		 * 
+		 * @param {Object} options A list of options to merge with 
+		 * [jQuery.Controller.prototype.options this.options].  Often, this method
+		 * is called by the [jquery.controller.plugin jQuery helper function].
+		 */
+		update: function( options ) {
+			extend(this.options, options);
+			this._unbind();
+			this.bind();
+		},
+		/**
+		 * Destroy unbinds and undelegates all event handlers on this controller, 
+		 * and prevents memory leaks.  This is called automatically
+		 * if the element is removed.  You can overwrite it to add your own
+		 * teardown functionality:
+		 * 
+		 *     $.Controller("ChangeText",{
+		 *       init : function(){
+		 *         this.oldText = this.element.text();
+		 *         this.element.text("Changed!!!")
+		 *       },
+		 *       destroy : function(){
+		 *         this.element.text(this.oldText);
+		 *         this._super(); //Always call this!
+		 *     })
+		 * 
+		 * Make sure you always call <code>_super</code> when overwriting
+		 * controller's destroy event.  The base destroy functionality unbinds
+		 * all event handlers the controller has created.
+		 * 
+		 * You could call destroy manually on an element with ChangeText
+		 * added like:
+		 * 
+		 *     $("#changed").change_text("destroy");
+		 * 
+		 */
+		destroy: function() {
+			if ( this._destroyed ) {
+				throw this[STR_CONSTRUCTOR].shortName + " controller already deleted";
+			}
+			var self = this,
+				fname = this[STR_CONSTRUCTOR].pluginName || this[STR_CONSTRUCTOR]._fullName,
+				controllers;
+			
+			// mark as destroyed
+			this._destroyed = true;
+			
+			// remove the className
+			this.element.removeClass(fname);
+
+			// unbind bindings
+			this._unbind();
+			// clean up
+			delete this._actions;
+
+			delete this.element.data("controllers")[fname];
+			
+			$(this).triggerHandler("destroyed"); //in case we want to know if the controller is removed
+			
+			this.element = null;
+		},
+		/**
+		 * Queries from the controller's element.
+		 * @codestart
+		 * ".destroy_all click" : function() {
+		 *    this.find(".todos").remove();
+		 * }
+		 * @codeend
+		 * @param {String} selector selection string
+		 * @return {jQuery.fn} returns the matched elements
+		 */
+		find: function( selector ) {
+			return this.element.find(selector);
+		},
+		//tells callback to set called on this.  I hate this.
+		_set_called: true
+	});
+
+	var processors = $.Controller.processors,
+
+	//------------- PROCESSSORS -----------------------------
+	//processors do the binding.  They return a function that
+	//unbinds when called.
+	//the basic processor that binds events
+	basicProcessor = function( el, event, selector, methodName, controller ) {
+		return binder(el, event, shifter(controller, methodName), selector);
+	};
+
+
+
+
+	//set common events to be processed as a basicProcessor
+	each("change click contextmenu dblclick keydown keyup keypress mousedown mousemove mouseout mouseover mouseup reset resize scroll select submit focusin focusout mouseenter mouseleave mousewheel".split(" "), function( i, v ) {
+		processors[v] = basicProcessor;
+	});
+	/**
+	 *  @add jQuery.fn
+	 */
+
+	//used to determine if a controller instance is one of controllers
+	//controllers can be strings or classes
+	var i, isAControllerOf = function( instance, controllers ) {
+		for ( i = 0; i < controllers.length; i++ ) {
+			if ( typeof controllers[i] == 'string' ? instance[STR_CONSTRUCTOR]._shortName == controllers[i] : instance instanceof controllers[i] ) {
+				return true;
+			}
+		}
+		return false;
+	};
+	$.fn.extend({
+		/**
+		 * @function controllers
+		 * Gets all controllers in the jQuery element.
+		 * @return {Array} an array of controller instances.
+		 */
+		controllers: function() {
+			var controllerNames = makeArray(arguments),
+				instances = [],
+				controllers, c, cname;
+			//check if arguments
+			this.each(function() {
+	
+				controllers = $.data(this, "controllers");
+				for ( cname in controllers ) {
+					if ( controllers.hasOwnProperty(cname) ) {
+						c = controllers[cname];
+						if (!controllerNames.length || isAControllerOf(c, controllerNames) ) {
+							instances.push(c);
+						}
+					}
+				}
+			});
+			return instances;
+		},
+		/**
+		 * @function controller
+		 * Gets a controller in the jQuery element.  With no arguments, returns the first one found.
+		 * @param {Object} controller (optional) if exists, the first controller instance with this class type will be returned.
+		 * @return {jQuery.Controller} the first controller.
+		 */
+		controller: function( controller ) {
+			return this.controllers.apply(this, arguments)[0];
+		}
+	});
+	
+
+})(jQuery);
+(function(){
+// prevent re-definition of the OpenAjax object
+if(!window["OpenAjax"]){
+	/**
+	* @class OpenAjax
+	* Use OpenAjax.hub to publish and subscribe to messages.
+	*/
+	OpenAjax = new function(){
+		var t = true;
+		var f = false;
+		var g = window;
+		var ooh = "org.openajax.hub.";
+
+		var h = {};
+		this.hub = h;
+		h.implementer = "http://openajax.org";
+		h.implVersion = "2.0";
+		h.specVersion = "2.0";
+		h.implExtraData = {};
+		var libs = {};
+		h.libraries = libs;
+
+		h.registerLibrary = function(prefix, nsURL, version, extra){
+			libs[prefix] = {
+				prefix: prefix,
+				namespaceURI: nsURL,
+				version: version,
+				extraData: extra 
+			};
+			this.publish(ooh+"registerLibrary", libs[prefix]);
+		}
+		h.unregisterLibrary = function(prefix){
+			this.publish(ooh+"unregisterLibrary", libs[prefix]);
+			delete libs[prefix];
+		}
+
+		h._subscriptions = { c:{}, s:[] };
+		h._cleanup = [];
+		h._subIndex = 0;
+		h._pubDepth = 0;
+
+		h.subscribe = function(name, callback, scope, subscriberData, filter)			
+		{
+			if(!scope){
+				scope = window;
+			}
+			var handle = name + "." + this._subIndex;
+			var sub = { scope: scope, cb: callback, fcb: filter, data: subscriberData, sid: this._subIndex++, hdl: handle };
+			var path = name.split(".");
+	 		this._subscribe(this._subscriptions, path, 0, sub);
+			return handle;
+		}
+
+		h.publish = function(name, message)		
+		{
+			var path = name.split(".");
+			this._pubDepth++;
+			this._publish(this._subscriptions, path, 0, name, message);
+			this._pubDepth--;
+			if((this._cleanup.length > 0) && (this._pubDepth == 0)) {
+				for(var i = 0; i < this._cleanup.length; i++) 
+					this.unsubscribe(this._cleanup[i].hdl);
+				delete(this._cleanup);
+				this._cleanup = [];
+			}
+		}
+
+		h.unsubscribe = function(sub) 
+		{
+			var path = sub.split(".");
+			var sid = path.pop();
+			this._unsubscribe(this._subscriptions, path, 0, sid);
+		}
+		
+		h._subscribe = function(tree, path, index, sub) 
+		{
+			var token = path[index];
+			if(index == path.length) 	
+				tree.s.push(sub);
+			else { 
+				if(typeof tree.c == "undefined")
+					 tree.c = {};
+				if(typeof tree.c[token] == "undefined") {
+					tree.c[token] = { c: {}, s: [] }; 
+					this._subscribe(tree.c[token], path, index + 1, sub);
+				}
+				else 
+					this._subscribe( tree.c[token], path, index + 1, sub);
+			}
+		}
+
+		h._publish = function(tree, path, index, name, msg, pid) {
+			if(typeof tree != "undefined") {
+				var node;
+				if(index == path.length) {
+					node = tree;
+				} else {
+					this._publish(tree.c[path[index]], path, index + 1, name, msg, pid);
+					this._publish(tree.c["*"], path, index + 1, name, msg, pid);
+					node = tree.c["**"];
+				}
+				if(typeof node != "undefined") {
+					var callbacks = node.s;
+					var max = callbacks.length;
+					for(var i = 0; i < max; i++) {
+						if(callbacks[i].cb) {
+							var sc = callbacks[i].scope;
+							var cb = callbacks[i].cb;
+							var fcb = callbacks[i].fcb;
+							var d = callbacks[i].data;
+							if(typeof cb == "string"){
+								// get a function object
+								cb = sc[cb];
+							}
+							if(typeof fcb == "string"){
+								// get a function object
+								fcb = sc[fcb];
+							}
+							if((!fcb) || (fcb.call(sc, name, msg, d))) {
+								cb.call(sc, name, msg, d, pid);
+							}
+						}
+					}
+				}
+			}
+		}
+			
+		h._unsubscribe = function(tree, path, index, sid) {
+			if(typeof tree != "undefined") {
+				if(index < path.length) {
+					var childNode = tree.c[path[index]];
+					this._unsubscribe(childNode, path, index + 1, sid);
+					if(childNode.s.length == 0) {
+						for(var x in childNode.c) 
+					 		return;		
+						delete tree.c[path[index]];	
+					}
+					return;
+				}
+				else {
+					var callbacks = tree.s;
+					var max = callbacks.length;
+					for(var i = 0; i < max; i++) 
+						if(sid == callbacks[i].sid) {
+							if(this._pubDepth > 0) {
+								callbacks[i].cb = null;	
+								this._cleanup.push(callbacks[i]);						
+							}
+							else
+								callbacks.splice(i, 1);
+							return; 	
+						}
+				}
+			}
+		}
+		// The following function is provided for automatic testing purposes.
+		// It is not expected to be deployed in run-time OpenAjax Hub implementations.
+		h.reinit = function()
+		{
+			for (var lib in OpenAjax.hub.libraries) {
+				delete OpenAjax.hub.libraries[lib];
+			}
+			OpenAjax.hub.registerLibrary("OpenAjax", "http://openajax.org/hub", "1.0", {});
+
+			delete OpenAjax._subscriptions;
+			OpenAjax._subscriptions = {c:{},s:[]};
+			delete OpenAjax._cleanup;
+			OpenAjax._cleanup = [];
+			OpenAjax._subIndex = 0;
+			OpenAjax._pubDepth = 0;
+		}
+	};
+	// Register the OpenAjax Hub itself as a library.
+	OpenAjax.hub.registerLibrary("OpenAjax", "http://openajax.org/hub", "1.0", {});
+
+}
+OpenAjax.hub.registerLibrary("JavaScriptMVC", "http://JavaScriptMVC.com", "3.1", {});
+})(jQuery);
+(function( $ ) {
+
+	// HELPER METHODS ==============
+	var myEval = function( script ) {
+		eval(script);
+	},
+		// removes the last character from a string
+		// this is no longer needed
+		// chop = function( string ) {
+		//	return string.substr(0, string.length - 1);
+		//},
+		rSplit = $.String.rsplit,
+		extend = $.extend,
+		isArray = $.isArray,
+		// regular expressions for caching
+		returnReg = /\r\n/g,
+		retReg = /\r/g,
+		newReg = /\n/g,
+		nReg = /\n/,
+		slashReg = /\\/g,
+		quoteReg = /"/g,
+		singleQuoteReg = /'/g,
+		tabReg = /\t/g,
+		leftBracket = /\{/g,
+		rightBracket = /\}/g,
+		quickFunc = /\s*\(([\$\w]+)\)\s*->([^\n]*)/,
+		// escapes characters starting with \
+		clean = function( content ) {
+			return content.replace(slashReg, '\\\\').replace(newReg, '\\n').replace(quoteReg, '\\"').replace(tabReg, '\\t');
+		},
+		// escapes html
+		// - from prototype  http://www.prototypejs.org/
+		escapeHTML = function( content ) {
+			return content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(quoteReg, '&#34;').replace(singleQuoteReg, "&#39;");
+		},
+		$View = $.View,
+		bracketNum = function(content){
+			var lefts = content.match(leftBracket),
+				rights = content.match(rightBracket);
+				
+			return (lefts ? lefts.length : 0) - 
+				   (rights ? rights.length : 0);
+		},
+		/**
+		 * @class jQuery.EJS
+		 * 
+		 * @plugin jquery/view/ejs
+		 * @parent jQuery.View
+		 * @download  http://jmvcsite.heroku.com/pluginify?plugins[]=jquery/view/ejs/ejs.js
+		 * @test jquery/view/ejs/qunit.html
+		 * 
+		 * 
+		 * Ejs provides <a href="http://www.ruby-doc.org/stdlib/libdoc/erb/rdoc/">ERB</a> 
+		 * style client side templates.  Use them with controllers to easily build html and inject
+		 * it into the DOM.
+		 * 
+		 * ###  Example
+		 * 
+		 * The following generates a list of tasks:
+		 * 
+		 * @codestart html
+		 * &lt;ul>
+		 * &lt;% for(var i = 0; i < tasks.length; i++){ %>
+		 *     &lt;li class="task &lt;%= tasks[i].identity %>">&lt;%= tasks[i].name %>&lt;/li>
+		 * &lt;% } %>
+		 * &lt;/ul>
+		 * @codeend
+		 * 
+		 * For the following examples, we assume this view is in <i>'views\tasks\list.ejs'</i>.
+		 * 
+		 * 
+		 * ## Use
+		 * 
+		 * ### Loading and Rendering EJS:
+		 * 
+		 * You should use EJS through the helper functions [jQuery.View] provides such as:
+		 * 
+		 *   - [jQuery.fn.after after]
+		 *   - [jQuery.fn.append append]
+		 *   - [jQuery.fn.before before]
+		 *   - [jQuery.fn.html html], 
+		 *   - [jQuery.fn.prepend prepend],
+		 *   - [jQuery.fn.replaceWith replaceWith], and 
+		 *   - [jQuery.fn.text text].
+		 * 
+		 * or [jQuery.Controller.prototype.view].
+		 * 
+		 * ### Syntax
+		 * 
+		 * EJS uses 5 types of tags:
+		 * 
+		 *   - <code>&lt;% CODE %&gt;</code> - Runs JS Code.
+		 *     For example:
+		 *     
+		 *         <% alert('hello world') %>
+		 *     
+		 *   - <code>&lt;%= CODE %&gt;</code> - Runs JS Code and writes the _escaped_ result into the result of the template.
+		 *     For example:
+		 *     
+		 *         <h1><%= 'hello world' %></h1>
+		 *         
+		 *   - <code>&lt;%== CODE %&gt;</code> - Runs JS Code and writes the _unescaped_ result into the result of the template.
+		 *     For example:
+		 *     
+		 *         <h1><%== '<span>hello world</span>' %></h1>
+		 *         
+		 *   - <code>&lt;%%= CODE %&gt;</code> - Writes <%= CODE %> to the result of the template.  This is very useful for generators.
+		 *     
+		 *         <%%= 'hello world' %>
+		 *         
+		 *   - <code>&lt;%# CODE %&gt;</code> - Used for comments.  This does nothing.
+		 *     
+		 *         <%# 'hello world' %>
+		 *        
+		 * ## Hooking up controllers
+		 * 
+		 * After drawing some html, you often want to add other widgets and plugins inside that html.
+		 * View makes this easy.  You just have to return the Contoller class you want to be hooked up.
+		 * 
+		 * @codestart
+		 * &lt;ul &lt;%= Mxui.Tabs%>>...&lt;ul>
+		 * @codeend
+		 * 
+		 * You can even hook up multiple controllers:
+		 * 
+		 * @codestart
+		 * &lt;ul &lt;%= [Mxui.Tabs, Mxui.Filler]%>>...&lt;ul>
+		 * @codeend
+		 * 
+		 * To hook up a controller with options or any other jQuery plugin use the
+		 * [jQuery.EJS.Helpers.prototype.plugin | plugin view helper]:
+		 * 
+		 * @codestart
+		 * &lt;ul &lt;%= plugin('mxui_tabs', { option: 'value' }) %>>...&lt;ul>
+		 * @codeend
+		 * 
+		 * Don't add a semicolon when using view helpers.
+		 * 
+		 * 
+		 * <h2>View Helpers</h2>
+		 * View Helpers return html code.  View by default only comes with 
+		 * [jQuery.EJS.Helpers.prototype.view view] and [jQuery.EJS.Helpers.prototype.text text].
+		 * You can include more with the view/helpers plugin.  But, you can easily make your own!
+		 * Learn how in the [jQuery.EJS.Helpers Helpers] page.
+		 * 
+		 * @constructor Creates a new view
+		 * @param {Object} options A hash with the following options
+		 * <table class="options">
+		 *     <tbody><tr><th>Option</th><th>Default</th><th>Description</th></tr>
+		 *     <tr>
+		 *      <td>text</td>
+		 *      <td>&nbsp;</td>
+		 *      <td>uses the provided text as the template. Example:<br/><code>new View({text: '&lt;%=user%>'})</code>
+		 *      </td>
+		 *     </tr>
+		 *     <tr>
+		 *      <td>type</td>
+		 *      <td>'<'</td>
+		 *      <td>type of magic tags.  Options are '&lt;' or '['
+		 *      </td>
+		 *     </tr>
+		 *     <tr>
+		 *      <td>name</td>
+		 *      <td>the element ID or url </td>
+		 *      <td>an optional name that is used for caching.
+		 *      </td>
+		 *     </tr>
+		 *    </tbody></table>
+		 */
+		EJS = function( options ) {
+			// If called without new, return a function that 
+			// renders with data and helpers like
+			// EJS({text: '<%= message %>'})({message: 'foo'});
+			// this is useful for steal's build system
+			if ( this.constructor != EJS ) {
+				var ejs = new EJS(options);
+				return function( data, helpers ) {
+					return ejs.render(data, helpers);
+				};
+			}
+			// if we get a function directly, it probably is coming from
+			// a steal-packaged view
+			if ( typeof options == "function" ) {
+				this.template = {
+					fn: options
+				};
+				return;
+			}
+			//set options on self
+			extend(this, EJS.options, options);
+			this.template = compile(this.text, this.type, this.name);
+		};
+	// add EJS to jQuery if it exists
+	window.jQuery && (jQuery.EJS = EJS);
+	/** 
+	 * @Prototype
+	 */
+	EJS.prototype.
+	/**
+	 * Renders an object with view helpers attached to the view.
+	 * 
+	 *     new EJS({text: "<%= message %>"}).render({
+	 *       message: "foo"
+	 *     },{helper: function(){ ... }})
+	 *     
+	 * @param {Object} object data to be rendered
+	 * @param {Object} [extraHelpers] an object with view helpers
+	 * @return {String} returns the result of the string
+	 */
+	render = function( object, extraHelpers ) {
+		object = object || {};
+		this._extra_helpers = extraHelpers;
+		var v = new EJS.Helpers(object, extraHelpers || {});
+		return this.template.fn.call(object, object, v);
+	};
+	/**
+	 * @Static
+	 */
+
+	extend(EJS, {
+		/**
+		 * Used to convert what's in &lt;%= %> magic tags to a string
+		 * to be inserted in the rendered output.
+		 * 
+		 * Typically, it's a string, and the string is just inserted.  However,
+		 * if it's a function or an object with a hookup method, it can potentially be 
+		 * be ran on the element after it's inserted into the page.
+		 * 
+		 * This is a very nice way of adding functionality through the view.
+		 * Usually this is done with [jQuery.EJS.Helpers.prototype.plugin]
+		 * but the following fades in the div element after it has been inserted:
+		 * 
+		 * @codestart
+		 * &lt;%= function(el){$(el).fadeIn()} %>
+		 * @codeend
+		 * 
+		 * @param {String|Object|Function} input the value in between the
+		 * write magic tags: &lt;%= %>
+		 * @return {String} returns the content to be added to the rendered
+		 * output.  The content is different depending on the type:
+		 * 
+		 *   * string - the original string
+		 *   * null or undefined - the empty string ""
+		 *   * an object with a hookup method - the attribute "data-view-id='XX'", where XX is a hookup number for jQuery.View
+		 *   * a function - the attribute "data-view-id='XX'", where XX is a hookup number for jQuery.View
+		 *   * an array - the attribute "data-view-id='XX'", where XX is a hookup number for jQuery.View
+		 */
+		text: function( input ) {
+			// if it's a string, return
+			if ( typeof input == 'string' ) {
+				return input;
+			}
+			// if has no value
+			if ( input === null || input === undefined ) {
+				return '';
+			}
+
+			// if it's an object, and it has a hookup method
+			var hook = (input.hookup &&
+			// make a function call the hookup method
+
+			function( el, id ) {
+				input.hookup.call(input, el, id);
+			}) ||
+			// or if it's a function, just use the input
+			(typeof input == 'function' && input) ||
+			// of it its an array, make a function that calls hookup or the function
+			// on each item in the array
+			(isArray(input) &&
+			function( el, id ) {
+				for ( var i = 0; i < input.length; i++ ) {
+					input[i].hookup ? input[i].hookup(el, id) : input[i](el, id);
+				}
+			});
+			// finally, if there is a funciton to hookup on some dom
+			// pass it to hookup to get the data-view-id back
+			if ( hook ) {
+				return "data-view-id='" + $View.hookup(hook) + "'";
+			}
+			// finally, if all else false, toString it
+			return input.toString ? input.toString() : "";
+		},
+		/**
+		 * Escapes the text provided as html if it's a string.  
+		 * Otherwise, the value is passed to EJS.text(text).
+		 * 
+		 * @param {String|Object|Array|Function} text to escape.  Otherwise,
+		 * the result of [jQuery.EJS.text] is returned.
+		 * @return {String} the escaped text or likely a $.View data-view-id attribute.
+		 */
+		clean: function( text ) {
+			//return sanatized text
+			if ( typeof text == 'string' ) {
+				return escapeHTML(text);
+			} else if ( typeof text == 'number' ) {
+				return text;
+			} else {
+				return EJS.text(text);
+			}
+		},
+		/**
+		 * @attribute options
+		 * Sets default options for all views.
+		 * 
+		 *     $.EJS.options.type = '['
+		 * 
+		 * Only one option is currently supported: type.
+		 * 
+		 * Type is the left hand magic tag.
+		 */
+		options: {
+			type: '<',
+			ext: '.ejs'
+		}
+	});
+	// ========= SCANNING CODE =========
+	// Given a scanner, and source content, calls block  with each token
+	// scanner - an object of magicTagName : values
+	// source - the source you want to scan
+	// block - function(token, scanner), called with each token
+	var scan = function( scanner, source, block ) {
+		// split on /\n/ to have new lines on their own line.
+		var source_split = rSplit(source, nReg),
+			i = 0;
+		for (; i < source_split.length; i++ ) {
+			scanline(scanner, source_split[i], block);
+		}
+
+	},
+		scanline = function( scanner, line, block ) {
+			scanner.lines++;
+			var line_split = rSplit(line, scanner.splitter),
+				token;
+			for ( var i = 0; i < line_split.length; i++ ) {
+				token = line_split[i];
+				if ( token !== null ) {
+					block(token, scanner);
+				}
+			}
+		},
+		// creates a 'scanner' object.  This creates
+		// values for the left and right magic tags
+		// it's splitter property is a regexp that splits content
+		// by all tags
+		makeScanner = function( left, right ) {
+			var scanner = {};
+			extend(scanner, {
+				left: left + '%',
+				right: '%' + right,
+				dLeft: left + '%%',
+				dRight: '%%' + right,
+				eeLeft: left + '%==',
+				eLeft: left + '%=',
+				cmnt: left + '%#',
+				scan: scan,
+				lines: 0
+			});
+			scanner.splitter = new RegExp("(" + [scanner.dLeft, scanner.dRight, scanner.eeLeft, scanner.eLeft, scanner.cmnt, scanner.left, scanner.right + '\n', scanner.right, '\n'].join(")|(").
+			replace(/\[/g, "\\[").replace(/\]/g, "\\]") + ")");
+			return scanner;
+		},
+		// compiles a template where
+		// source - template text
+		// left - the left magic tag
+		// name - the name of the template (for debugging)
+		// returns an object like: {out : "", fn : function(){ ... }} where
+		//   out -  the converted JS source of the view
+		//   fn - a function made from the JS source
+		compile = function( source, left, name ) {
+			// make everything only use \n
+			source = source.replace(returnReg, "\n").replace(retReg, "\n");
+			// if no left is given, assume <
+			left = left || '<';
+
+			// put and insert cmds are used for adding content to the template
+			// currently they are identical, I am not sure why
+			var put_cmd = "___v1ew.push(",
+				insert_cmd = put_cmd,
+				// the text that starts the view code (or block function)
+				startTxt = 'var ___v1ew = [];',
+				// the text that ends the view code (or block function)
+				finishTxt = "return ___v1ew.join('')",
+				// initialize a buffer
+				buff = new EJS.Buffer([startTxt], []),
+				// content is used as the current 'processing' string
+				// this is the content between magic tags
+				content = '',
+				// adds something to be inserted into the view template
+				// this comes out looking like __v1ew.push("CONENT")
+				put = function( content ) {
+					buff.push(put_cmd, '"', clean(content), '");');
+				},
+				// the starting magic tag
+				startTag = null,
+				// cleans the running content
+				empty = function() {
+					content = ''
+				},
+				// what comes after clean or text
+				doubleParen = "));",
+				// a stack used to keep track of how we should end a bracket }
+				// once we have a <%= %> with a leftBracket
+				// we store how the file should end here (either '))' or ';' )
+				endStack =[];
+
+			// start going token to token
+			scan(makeScanner(left, left === '[' ? ']' : '>'), source || "", function( token, scanner ) {
+				// if we don't have a start pair
+				var bn;
+				if ( startTag === null ) {
+					switch ( token ) {
+					case '\n':
+						content = content + "\n";
+						put(content);
+						buff.cr();
+						empty();
+						break;
+						// set start tag, add previous content (if there is some)
+						// clean content
+					case scanner.left:
+					case scanner.eLeft:
+					case scanner.eeLeft:
+					case scanner.cmnt:
+						// a new line, just add whatever content w/i a clean
+						// reset everything
+						startTag = token;
+						if ( content.length > 0 ) {
+							put(content);
+						}
+						empty();
+						break;
+
+					case scanner.dLeft:
+						// replace <%% with <%
+						content += scanner.left;
+						break;
+					default:
+						content += token;
+						break;
+					}
+				}
+				else {
+					//we have a start tag
+					switch ( token ) {
+					case scanner.right:
+						// %>
+						switch ( startTag ) {
+						case scanner.left:
+							// <%
+							
+							// get the number of { minus }
+							bn = bracketNum(content);
+							// how are we ending this statement
+							var last = 
+								// if the stack has value and we are ending a block
+								endStack.length && bn == -1 ? 
+								// use the last item in the block stack
+								endStack.pop() : 
+								// or use the default ending
+								";";
+							
+							// if we are ending a returning block
+							// add the finish text which returns the result of the
+							// block 
+							if(last === doubleParen) {
+								buff.push(finishTxt)
+							}
+							// add the remaining content
+							buff.push(content, last);
+							
+							// if we have a block, start counting 
+							if(bn === 1 ){
+								endStack.push(";")
+							}
+							break;
+						case scanner.eLeft:
+							// <%= clean content
+							bn = bracketNum(content);
+							if( bn ) {
+								endStack.push(doubleParen)
+							}
+							if(quickFunc.test(content)){
+								var parts = content.match(quickFunc)
+								content = "function(__){var "+parts[1]+"=$(__);"+parts[2]+"}"
+							}
+							buff.push(insert_cmd, "jQuery.EJS.clean(", content,bn ? startTxt : doubleParen);
+							break;
+						case scanner.eeLeft:
+							// <%== content
+							
+							// get the number of { minus } 
+							bn = bracketNum(content);
+							// if we have more {, it means there is a block
+							if( bn ){
+								// when we return to the same # of { vs } end wiht a doubleParen
+								endStack.push(doubleParen)
+							} 
+							
+							buff.push(insert_cmd, "jQuery.EJS.text(", content, 
+								// if we have a block
+								bn ? 
+								// start w/ startTxt "var _v1ew = [])"
+								startTxt : 
+								// if not, add doubleParent to close push and text
+								doubleParen
+								);
+							break;
+						}
+						startTag = null;
+						empty();
+						break;
+					case scanner.dRight:
+						content += scanner.right;
+						break;
+					default:
+						content += token;
+						break;
+					}
+				}
+			})
+			if ( content.length > 0 ) {
+				// Should be content.dump in Ruby
+				buff.push(put_cmd, '"', clean(content) + '");');
+			}
+			var template = buff.close(),
+				out = {
+					out: 'try { with(_VIEW) { with (_CONTEXT) {' + template + " "+finishTxt+"}}}catch(e){e.lineNumber=null;throw e;}"
+				};
+			//use eval instead of creating a function, b/c it is easier to debug
+			myEval.call(out, 'this.fn = (function(_CONTEXT,_VIEW){' + out.out + '});\r\n//@ sourceURL=' + name + ".js");
+
+			return out;
+		};
+
+
+	// A Buffer used to add content to.
+	// This is useful for performance and simplifying the 
+	// code above.
+	// We also can use this so we know line numbers when there
+	// is an error.  
+	// pre_cmd - code that sets up the buffer
+	// post - code that finalizes the buffer
+	EJS.Buffer = function( pre_cmd, post ) {
+		// the current line we are on
+		this.line = [];
+		// the combined content added to this buffer
+		this.script = [];
+		// content at the end of the buffer
+		this.post = post;
+		// add the pre commands to the first line
+		this.push.apply(this, pre_cmd);
+	};
+	EJS.Buffer.prototype = {
+		// add content to this line
+		// need to maintain your own semi-colons (for performance)
+		push: function() {
+			this.line.push.apply(this.line, arguments);
+		},
+		// starts a new line
+		cr: function() {
+			this.script.push(this.line.join(''), "\n");
+			this.line = [];
+		},
+		//returns the script too
+		close: function() {
+			// if we have ending line content, add it to the script
+			if ( this.line.length > 0 ) {
+				this.script.push(this.line.join(''));
+				this.line = [];
+			}
+			// if we have ending content, add it
+			this.post.length && this.push.apply(this, this.post);
+			// always end in a ;
+			this.script.push(";");
+			return this.script.join("");
+		}
+
+	};
+
+	/**
+	 * @class jQuery.EJS.Helpers
+	 * @parent jQuery.EJS
+	 * By adding functions to jQuery.EJS.Helpers.prototype, those functions will be available in the 
+	 * views.
+	 * 
+	 * The following helper converts a given string to upper case:
+	 * 
+	 * 	$.EJS.Helpers.prototype.toUpper = function(params)
+	 * 	{
+	 * 		return params.toUpperCase();
+	 * 	}
+	 * 
+	 * Use it like this in any EJS template:
+	 * 
+	 * 	<%= toUpper('javascriptmvc') %>
+	 * 
+	 * To access the current DOM element return a function that takes the element as a parameter:
+	 * 
+	 * 	$.EJS.Helpers.prototype.upperHtml = function(params)
+	 * 	{
+	 * 		return function(el) {
+	 * 			$(el).html(params.toUpperCase());
+	 * 		}
+	 * 	}
+	 * 
+	 * In your EJS view you can then call the helper on an element tag:
+	 * 
+	 * 	<div <%= upperHtml('javascriptmvc') %>></div>
+	 * 
+	 * 
+	 * @constructor Creates a view helper.  This function 
+	 * is called internally.  You should never call it.
+	 * @param {Object} data The data passed to the 
+	 * view.  Helpers have access to it through this._data
+	 */
+	EJS.Helpers = function( data, extras ) {
+		this._data = data;
+		this._extras = extras;
+		extend(this, extras);
+	};
+	/**
+	 * @prototype
+	 */
+	EJS.Helpers.prototype = {
+		/**
+		 * Hooks up a jQuery plugin on.
+		 * @param {String} name the plugin name
+		 */
+		plugin: function( name ) {
+			var args = $.makeArray(arguments),
+				widget = args.shift();
+			return function( el ) {
+				var jq = $(el);
+				jq[widget].apply(jq, args);
+			};
+		},
+		/**
+		 * Renders a partial view.  This is deprecated in favor of <code>$.View()</code>.
+		 */
+		view: function( url, data, helpers ) {
+			helpers = helpers || this._extras;
+			data = data || this._data;
+			return $View(url, data, helpers); //new EJS(options).render(data, helpers);
+		}
+	};
+
+	// options for steal's build
+	$View.register({
+		suffix: "ejs",
+		//returns a function that renders the view
+		script: function( id, src ) {
+			return "jQuery.EJS(function(_CONTEXT,_VIEW) { " + new EJS({
+				text: src,
+				name: id
+			}).template.out + " })";
+		},
+		renderer: function( id, text ) {
+			return EJS({
+				text: text,
+				name: id
+			});
+		}
+	});
+})(jQuery);
+(function() {
+
+	/**
+	 * @function jQuery.Controller.static.processors.subscribe
+	 * @parent jQuery.Controller.static.processors
+	 * @plugin jquery/controller/subscribe
+	 * Adds OpenAjax.Hub subscribing to controllers.
+	 * 
+	 *     $.Controller("Subscriber",{
+	 *       "recipe.updated subscribe" : function(called, recipe){
+	 *         
+	 *       },
+	 *       "todo.* subscribe" : function(called, todo){
+	 *       
+	 *       }
+	 *     })
+	 * 
+	 * You should typically be listening to jQuery triggered events when communicating between
+	 * controllers.  Subscribe should be used for listening to model changes.
+	 * 
+	 * ### API
+	 * 
+	 * This is the call signiture for the processor, not the controller subscription callbacks.
+	 * 
+	 * @param {HTMLElement} el the element being bound.  This isn't used.
+	 * @param {String} event the event type (subscribe).
+	 * @param {String} selector the subscription name
+	 * @param {String} cb the callback function's name
+	 */
+	jQuery.Controller.processors.subscribe = function( el, event, selector, cb, controller ) {
+		var subscription = OpenAjax.hub.subscribe(selector, function(){
+			return controller[cb].apply(controller, arguments)
+		});
+		return function() {
+			OpenAjax.hub.unsubscribe(subscription);
+		};
+	};
+
+	/**
+	 * @add jQuery.Controller.prototype
+	 */
+	//breaker
+	/**
+	 * @function publish
+	 * @hide
+	 * Publishes a message to OpenAjax.hub.
+	 * @param {String} message Message name, ex: "Something.Happened".
+	 * @param {Object} data The data sent.
+	 */
+	jQuery.Controller.prototype.publish = function() {
+		OpenAjax.hub.publish.apply(OpenAjax.hub, arguments);
+	};
+})(jQuery);
 /*!
+ * jQuery blockUI plugin
+ * Version 2.36 (16-NOV-2010)
+ * @requires jQuery v1.2.3 or later
+ *
+ * Examples at: http://malsup.com/jquery/block/
+ * Copyright (c) 2007-2008 M. Alsup
+ * Dual licensed under the MIT and GPL licenses:
+ * http://www.opensource.org/licenses/mit-license.php
+ * http://www.gnu.org/licenses/gpl.html
+ *
+ * Thanks to Amir-Hossein Sobhi for some excellent contributions!
+ */
+
+;(function($) {
+
+if (/1\.(0|1|2)\.(0|1|2)/.test($.fn.jquery) || /^1.1/.test($.fn.jquery)) {
+	alert('blockUI requires jQuery v1.2.3 or later!  You are using v' + $.fn.jquery);
+	return;
+}
+
+$.fn._fadeIn = $.fn.fadeIn;
+
+var noOp = function() {};
+
+// this bit is to ensure we don't call setExpression when we shouldn't (with extra muscle to handle
+// retarded userAgent strings on Vista)
+var mode = document.documentMode || 0;
+var setExpr = $.browser.msie && (($.browser.version < 8 && !mode) || mode < 8);
+var ie6 = $.browser.msie && /MSIE 6.0/.test(navigator.userAgent) && !mode;
+
+// global $ methods for blocking/unblocking the entire page
+$.blockUI   = function(opts) { install(window, opts); };
+$.unblockUI = function(opts) { remove(window, opts); };
+
+// convenience method for quick growl-like notifications  (http://www.google.com/search?q=growl)
+$.growlUI = function(title, message, timeout, onClose) {
+	var $m = $('<div class="growlUI"></div>');
+	if (title) $m.append('<h1>'+title+'</h1>');
+	if (message) $m.append('<h2>'+message+'</h2>');
+	if (timeout == undefined) timeout = 3000;
+	$.blockUI({
+		message: $m, fadeIn: 700, fadeOut: 1000, centerY: false,
+		timeout: timeout, showOverlay: false,
+		onUnblock: onClose, 
+		css: $.blockUI.defaults.growlCSS
+	});
+};
+
+// plugin method for blocking element content
+$.fn.block = function(opts) {
+	return this.unblock({ fadeOut: 0 }).each(function() {
+		if ($.css(this,'position') == 'static')
+			this.style.position = 'relative';
+		if ($.browser.msie)
+			this.style.zoom = 1; // force 'hasLayout'
+		install(this, opts);
+	});
+};
+
+// plugin method for unblocking element content
+$.fn.unblock = function(opts) {
+	return this.each(function() {
+		remove(this, opts);
+	});
+};
+
+$.blockUI.version = 2.35; // 2nd generation blocking at no extra cost!
+
+// override these in your code to change the default behavior and style
+$.blockUI.defaults = {
+	// message displayed when blocking (use null for no message)
+	message:  '<h1>Please wait...</h1>',
+
+	title: null,	  // title string; only used when theme == true
+	draggable: true,  // only used when theme == true (requires jquery-ui.js to be loaded)
+	
+	theme: false, // set to true to use with jQuery UI themes
+	
+	// styles for the message when blocking; if you wish to disable
+	// these and use an external stylesheet then do this in your code:
+	// $.blockUI.defaults.css = {};
+	css: {
+		padding:	0,
+		margin:		0,
+		width:		'30%',
+		top:		'40%',
+		left:		'35%',
+		textAlign:	'center',
+		color:		'#000',
+		border:		'3px solid #aaa',
+		backgroundColor:'#fff',
+		cursor:		'default'
+	},
+	
+	// minimal style set used when themes are used
+	themedCSS: {
+		width:	'30%',
+		top:	'40%',
+		left:	'35%'
+	},
+
+	// styles for the overlay
+	overlayCSS:  {
+		backgroundColor: '#013012',
+		opacity:	  	 0.5,
+		cursor:		  	 'default'
+	},
+
+	// styles applied when using $.growlUI
+	growlCSS: {
+		width:  	'350px',
+		top:		'10px',
+		left:   	'',
+		right:  	'10px',
+		border: 	'none',
+		padding:	'5px',
+		opacity:	0.6,
+		cursor: 	'default',
+		color:		'#fff',
+		backgroundColor: '#000',
+		'-webkit-border-radius': '10px',
+		'-moz-border-radius':	 '10px',
+		'border-radius': 		 '10px'
+	},
+	
+	// IE issues: 'about:blank' fails on HTTPS and javascript:false is s-l-o-w
+	// (hat tip to Jorge H. N. de Vasconcelos)
+	iframeSrc: /^https/i.test(window.location.href || '') ? 'javascript:false' : 'about:blank',
+
+	// force usage of iframe in non-IE browsers (handy for blocking applets)
+	forceIframe: false,
+
+	// z-index for the blocking overlay
+	baseZ: 1000,
+
+	// set these to true to have the message automatically centered
+	centerX: true, // <-- only effects element blocking (page block controlled via css above)
+	centerY: true,
+
+	// allow body element to be stetched in ie6; this makes blocking look better
+	// on "short" pages.  disable if you wish to prevent changes to the body height
+	allowBodyStretch: true,
+
+	// enable if you want key and mouse events to be disabled for content that is blocked
+	bindEvents: true,
+
+	// be default blockUI will supress tab navigation from leaving blocking content
+	// (if bindEvents is true)
+	constrainTabKey: true,
+
+	// fadeIn time in millis; set to 0 to disable fadeIn on block
+	fadeIn:  200,
+
+	// fadeOut time in millis; set to 0 to disable fadeOut on unblock
+	fadeOut:  400,
+
+	// time in millis to wait before auto-unblocking; set to 0 to disable auto-unblock
+	timeout: 0,
+
+	// disable if you don't want to show the overlay
+	showOverlay: true,
+
+	// if true, focus will be placed in the first available input field when
+	// page blocking
+	focusInput: true,
+
+	// suppresses the use of overlay styles on FF/Linux (due to performance issues with opacity)
+	applyPlatformOpacityRules: true,
+	
+	// callback method invoked when fadeIn has completed and blocking message is visible
+	onBlock: null,
+
+	// callback method invoked when unblocking has completed; the callback is
+	// passed the element that has been unblocked (which is the window object for page
+	// blocks) and the options that were passed to the unblock call:
+	//	 onUnblock(element, options)
+	onUnblock: null,
+
+	// don't ask; if you really must know: http://groups.google.com/group/jquery-en/browse_thread/thread/36640a8730503595/2f6a79a77a78e493#2f6a79a77a78e493
+	quirksmodeOffsetHack: 4,
+
+	// class name of the message block
+	blockMsgClass: 'blockMsg'
+};
+
+// private data and functions follow...
+
+var pageBlock = null;
+var pageBlockEls = [];
+
+function install(el, opts) {
+	var full = (el == window);
+	var msg = opts && opts.message !== undefined ? opts.message : undefined;
+	opts = $.extend({}, $.blockUI.defaults, opts || {});
+	opts.overlayCSS = $.extend({}, $.blockUI.defaults.overlayCSS, opts.overlayCSS || {});
+	var css = $.extend({}, $.blockUI.defaults.css, opts.css || {});
+	var themedCSS = $.extend({}, $.blockUI.defaults.themedCSS, opts.themedCSS || {});
+	msg = msg === undefined ? opts.message : msg;
+
+	// remove the current block (if there is one)
+	if (full && pageBlock)
+		remove(window, {fadeOut:0});
+
+	// if an existing element is being used as the blocking content then we capture
+	// its current place in the DOM (and current display style) so we can restore
+	// it when we unblock
+	if (msg && typeof msg != 'string' && (msg.parentNode || msg.jquery)) {
+		var node = msg.jquery ? msg[0] : msg;
+		var data = {};
+		$(el).data('blockUI.history', data);
+		data.el = node;
+		data.parent = node.parentNode;
+		data.display = node.style.display;
+		data.position = node.style.position;
+		if (data.parent)
+			data.parent.removeChild(node);
+	}
+
+	var z = opts.baseZ;
+
+	// blockUI uses 3 layers for blocking, for simplicity they are all used on every platform;
+	// layer1 is the iframe layer which is used to supress bleed through of underlying content
+	// layer2 is the overlay layer which has opacity and a wait cursor (by default)
+	// layer3 is the message content that is displayed while blocking
+
+	var lyr1 = ($.browser.msie || opts.forceIframe) 
+		? $('<iframe class="blockUI" style="z-index:'+ (z++) +';display:none;border:none;margin:0;padding:0;position:absolute;width:100%;height:100%;top:0;left:0" src="'+opts.iframeSrc+'"></iframe>')
+		: $('<div class="blockUI" style="display:none"></div>');
+	var lyr2 = $('<div class="blockUI blockOverlay" style="z-index:'+ (z++) +';display:none;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0"></div>');
+	
+	var lyr3, s;
+	if (opts.theme && full) {
+		s = '<div class="blockUI ' + opts.blockMsgClass + ' blockPage ui-dialog ui-widget ui-corner-all" style="z-index:'+z+';display:none;position:fixed">' +
+				'<div class="ui-widget-header ui-dialog-titlebar ui-corner-all blockTitle">'+(opts.title || '&nbsp;')+'</div>' +
+				'<div class="ui-widget-content ui-dialog-content"></div>' +
+			'</div>';
+	}
+	else if (opts.theme) {
+		s = '<div class="blockUI ' + opts.blockMsgClass + ' blockElement ui-dialog ui-widget ui-corner-all" style="z-index:'+z+';display:none;position:absolute">' +
+				'<div class="ui-widget-header ui-dialog-titlebar ui-corner-all blockTitle">'+(opts.title || '&nbsp;')+'</div>' +
+				'<div class="ui-widget-content ui-dialog-content"></div>' +
+			'</div>';
+	}
+	else if (full) {
+		s = '<div class="blockUI ' + opts.blockMsgClass + ' blockPage" style="z-index:'+z+';display:none;position:fixed"></div>';
+	}			
+	else {
+		s = '<div class="blockUI ' + opts.blockMsgClass + ' blockElement" style="z-index:'+z+';display:none;position:absolute"></div>';
+	}
+	lyr3 = $(s);
+
+	// if we have a message, style it
+	if (msg) {
+		if (opts.theme) {
+			lyr3.css(themedCSS);
+			lyr3.addClass('ui-widget-content');
+		}
+		else 
+			lyr3.css(css);
+	}
+
+	// style the overlay
+	if (!opts.applyPlatformOpacityRules || !($.browser.mozilla && /Linux/.test(navigator.platform)))
+		lyr2.css(opts.overlayCSS);
+	lyr2.css('position', full ? 'fixed' : 'absolute');
+
+	// make iframe layer transparent in IE
+	if ($.browser.msie || opts.forceIframe)
+		lyr1.css('opacity',0.0);
+
+	//$([lyr1[0],lyr2[0],lyr3[0]]).appendTo(full ? 'body' : el);
+	var layers = [lyr1,lyr2,lyr3], $par = full ? $('body') : $(el);
+	$.each(layers, function() {
+		this.appendTo($par);
+	});
+	
+	if (opts.theme && opts.draggable && $.fn.draggable) {
+		lyr3.draggable({
+			handle: '.ui-dialog-titlebar',
+			cancel: 'li'
+		});
+	}
+
+	// ie7 must use absolute positioning in quirks mode and to account for activex issues (when scrolling)
+	var expr = setExpr && (!$.boxModel || $('object,embed', full ? null : el).length > 0);
+	if (ie6 || expr) {
+		// give body 100% height
+		if (full && opts.allowBodyStretch && $.boxModel)
+			$('html,body').css('height','100%');
+
+		// fix ie6 issue when blocked element has a border width
+		if ((ie6 || !$.boxModel) && !full) {
+			var t = sz(el,'borderTopWidth'), l = sz(el,'borderLeftWidth');
+			var fixT = t ? '(0 - '+t+')' : 0;
+			var fixL = l ? '(0 - '+l+')' : 0;
+		}
+
+		// simulate fixed position
+		$.each([lyr1,lyr2,lyr3], function(i,o) {
+			var s = o[0].style;
+			s.position = 'absolute';
+			if (i < 2) {
+				full ? s.setExpression('height','Math.max(document.body.scrollHeight, document.body.offsetHeight) - (jQuery.boxModel?0:'+opts.quirksmodeOffsetHack+') + "px"')
+					 : s.setExpression('height','this.parentNode.offsetHeight + "px"');
+				full ? s.setExpression('width','jQuery.boxModel && document.documentElement.clientWidth || document.body.clientWidth + "px"')
+					 : s.setExpression('width','this.parentNode.offsetWidth + "px"');
+				if (fixL) s.setExpression('left', fixL);
+				if (fixT) s.setExpression('top', fixT);
+			}
+			else if (opts.centerY) {
+				if (full) s.setExpression('top','(document.documentElement.clientHeight || document.body.clientHeight) / 2 - (this.offsetHeight / 2) + (blah = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop) + "px"');
+				s.marginTop = 0;
+			}
+			else if (!opts.centerY && full) {
+				var top = (opts.css && opts.css.top) ? parseInt(opts.css.top) : 0;
+				var expression = '((document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop) + '+top+') + "px"';
+				s.setExpression('top',expression);
+			}
+		});
+	}
+
+	// show the message
+	if (msg) {
+		if (opts.theme)
+			lyr3.find('.ui-widget-content').append(msg);
+		else
+			lyr3.append(msg);
+		if (msg.jquery || msg.nodeType)
+			$(msg).show();
+	}
+
+	if (($.browser.msie || opts.forceIframe) && opts.showOverlay)
+		lyr1.show(); // opacity is zero
+	if (opts.fadeIn) {
+		var cb = opts.onBlock ? opts.onBlock : noOp;
+		var cb1 = (opts.showOverlay && !msg) ? cb : noOp;
+		var cb2 = msg ? cb : noOp;
+		if (opts.showOverlay)
+			lyr2._fadeIn(opts.fadeIn, cb1);
+		if (msg)
+			lyr3._fadeIn(opts.fadeIn, cb2);
+	}
+	else {
+		if (opts.showOverlay)
+			lyr2.show();
+		if (msg)
+			lyr3.show();
+		if (opts.onBlock)
+			opts.onBlock();
+	}
+
+	// bind key and mouse events
+	bind(1, el, opts);
+
+	if (full) {
+		pageBlock = lyr3[0];
+		pageBlockEls = $(':input:enabled:visible',pageBlock);
+		if (opts.focusInput)
+			setTimeout(focus, 20);
+	}
+	else
+		center(lyr3[0], opts.centerX, opts.centerY);
+
+	if (opts.timeout) {
+		// auto-unblock
+		var to = setTimeout(function() {
+			full ? $.unblockUI(opts) : $(el).unblock(opts);
+		}, opts.timeout);
+		$(el).data('blockUI.timeout', to);
+	}
+};
+
+// remove the block
+function remove(el, opts) {
+	var full = (el == window);
+	var $el = $(el);
+	var data = $el.data('blockUI.history');
+	var to = $el.data('blockUI.timeout');
+	if (to) {
+		clearTimeout(to);
+		$el.removeData('blockUI.timeout');
+	}
+	opts = $.extend({}, $.blockUI.defaults, opts || {});
+	bind(0, el, opts); // unbind events
+	
+	var els;
+	if (full) // crazy selector to handle odd field errors in ie6/7
+		els = $('body').children().filter('.blockUI').add('body > .blockUI');
+	else
+		els = $('.blockUI', el);
+
+	if (full)
+		pageBlock = pageBlockEls = null;
+
+	if (opts.fadeOut) {
+		els.fadeOut(opts.fadeOut);
+		setTimeout(function() { reset(els,data,opts,el); }, opts.fadeOut);
+	}
+	else
+		reset(els, data, opts, el);
+};
+
+// move blocking element back into the DOM where it started
+function reset(els,data,opts,el) {
+	els.each(function(i,o) {
+		// remove via DOM calls so we don't lose event handlers
+		if (this.parentNode)
+			this.parentNode.removeChild(this);
+	});
+
+	if (data && data.el) {
+		data.el.style.display = data.display;
+		data.el.style.position = data.position;
+		if (data.parent)
+			data.parent.appendChild(data.el);
+		$(el).removeData('blockUI.history');
+	}
+
+	if (typeof opts.onUnblock == 'function')
+		opts.onUnblock(el,opts);
+};
+
+// bind/unbind the handler
+function bind(b, el, opts) {
+	var full = el == window, $el = $(el);
+
+	// don't bother unbinding if there is nothing to unbind
+	if (!b && (full && !pageBlock || !full && !$el.data('blockUI.isBlocked')))
+		return;
+	if (!full)
+		$el.data('blockUI.isBlocked', b);
+
+	// don't bind events when overlay is not in use or if bindEvents is false
+	if (!opts.bindEvents || (b && !opts.showOverlay)) 
+		return;
+
+	// bind anchors and inputs for mouse and key events
+	var events = 'mousedown mouseup keydown keypress';
+	b ? $(document).bind(events, opts, handler) : $(document).unbind(events, handler);
+
+// former impl...
+//	   var $e = $('a,:input');
+//	   b ? $e.bind(events, opts, handler) : $e.unbind(events, handler);
+};
+
+// event handler to suppress keyboard/mouse events when blocking
+function handler(e) {
+	// allow tab navigation (conditionally)
+	if (e.keyCode && e.keyCode == 9) {
+		if (pageBlock && e.data.constrainTabKey) {
+			var els = pageBlockEls;
+			var fwd = !e.shiftKey && e.target === els[els.length-1];
+			var back = e.shiftKey && e.target === els[0];
+			if (fwd || back) {
+				setTimeout(function(){focus(back)},10);
+				return false;
+			}
+		}
+	}
+	var opts = e.data;
+	// allow events within the message content
+	if ($(e.target).parents('div.' + opts.blockMsgClass).length > 0)
+		return true;
+
+	// allow events for content that is not being blocked
+	return $(e.target).parents().children().filter('div.blockUI').length == 0;
+};
+
+function focus(back) {
+	if (!pageBlockEls)
+		return;
+	var e = pageBlockEls[back===true ? pageBlockEls.length-1 : 0];
+	if (e)
+		e.focus();
+};
+
+function center(el, x, y) {
+	var p = el.parentNode, s = el.style;
+	var l = ((p.offsetWidth - el.offsetWidth)/2) - sz(p,'borderLeftWidth');
+	var t = ((p.offsetHeight - el.offsetHeight)/2) - sz(p,'borderTopWidth');
+	if (x) s.left = l > 0 ? (l+'px') : '0';
+	if (y) s.top  = t > 0 ? (t+'px') : '0';
+};
+
+function sz(el, p) {
+	return parseInt($.css(el,p))||0;
+};
+
+})(jQuery);
+;
+(function($){
+/**
+ * @class Trend.Base
+ * @parent Controllers
+ * @inherits jQuery.Controller
+ * @author Alive.Kuo
+ */
+$.Controller('Trend.Base',
+/** @Static */
+{
+	defaults : {},
+	fullPath : function(){
+		return $.String.underscore(this.fullName.replace(/\./ig,'/'));
+	},
+	/*
+	 * Get instance of this controller. 
+	 * If it's singleton, create a controller on this.onElement or window or document.
+	*/
+	instance: function(settings) {
+		var options = settings || {};
+		if ( this.isSingleton ) {
+			var element = '';
+			if ( this.onBody ) {
+				element = $('body');
+			}
+			else if(this.onElement){
+				element = $(this.onElement);
+			}
+			else if(this.onWindow){
+				element = $(window);
+			}
+			else
+			{
+				element = $(document.documentElement);
+			}
+
+			if(element.data('controllers') && element.data('controllers')[this._fullName])
+			{
+				element.data('controllers')[this._fullName].update(settings);
+				return element.data('controllers')[this._fullName];
+			}
+			else
+			{
+				return new this(element, options);
+			}
+		}
+		if ( this.onElement ) return new this(this.onElement, options);
+		if ( this.hasActiveElement ) return $(this.hasActiveElement).controller(this._shortName);
+		if ( this.onBody ) {
+			return new this($('body'), options);
+		}
+		throw "NR.Core: " + this.fullName + " is not improperly embedded on page";
+	},
+	inited: false,
+	/*
+	 * Rewrite $.Controller.setup
+	 * Add preSetup()
+	*/
+	setup: function() {
+		this._super.apply(this, arguments);
+		this.preSetup && this.preSetup();
+	},
+	init: function() {
+		;
+	}
+},
+/** @Prototype */
+{
+	timer: null,
+	interval: null,
+	init : function(){
+		this.constructor.inited = true;
+	},
+	/*
+	 *  Clear timer and interval whenever this controller is removed.
+	*/
+	destroy: function(){
+		;
+		this.constructor.inited = false;
+		if(this.timer != null){
+			$.each(this.timer, function(i, timer){
+				clearTimeout(timer);
+			});
+		}
+		if(this.interval != null)
+		{
+			$.each(this.interval, function(i, interval){
+				clearInterval(interval);
+			});
+		}
+		this._super();
+	},
+	previous_options: null,
+	update: function(options){
+		this.previous_options = this.options;
+		this._super(options);
+		this.updateView();
+	},
+	updateView: function(){
+	}
+})
+
+})(jQuery);
+(function($){
+	
+var isArray = $.isArray,
+	// essentially returns an object that has all the must have comparisons ...
+	// must haves, do not return true when provided undefined
+	cleanSet = function(obj, compares){
+		var copy = $.extend({}, obj);
+		for(var prop in copy) {
+			var compare = compares[prop] === undefined ? compares["*"] : compares[prop];
+			if( same(copy[prop], undefined, compare ) ) {
+				delete copy[prop]
+			}
+		}
+		return copy;
+	},
+	propCount = function(obj){
+		var count = 0;
+		for(var prop in obj) count++;
+		return count;
+	};
+
+/**
+ * @class jQuery.Object
+ * @parent jquerymx.lang
+ * 
+ * Object contains several helper methods that 
+ * help compare objects.
+ * 
+ * ## same
+ * 
+ * Returns true if two objects are similar.
+ * 
+ *     $.Object.same({foo: "bar"} , {bar: "foo"}) //-> false
+ *   
+ * ## subset
+ * 
+ * Returns true if an object is a set of another set.
+ * 
+ *     $.Object.subset({}, {foo: "bar"} ) //-> true
+ * 
+ * ## subsets
+ * 
+ * Returns the subsets of an object
+ * 
+ *     $.Object.subsets({userId: 20},
+ *                      [
+ *                       {userId: 20, limit: 30},
+ *                       {userId: 5},
+ *                       {}
+ *                      ]) 
+ *              //->    [{userId: 20, limit: 30}]
+ */
+$.Object = {};
+
+/**
+ * @function same
+ * Returns if two objects are the same.  It takes an optional compares object that
+ * can be used to make comparisons.
+ * 
+ * This function does not work with objects that create circular references.
+ * 
+ * ## Examples
+ * 
+ *     $.Object.same({name: "Justin"},
+ *                   {name: "JUSTIN"}) //-> false
+ *     
+ *     // ignore the name property
+ *     $.Object.same({name: "Brian"},
+ *                   {name: "JUSTIN"},
+ *                   {name: null})      //-> true
+ *     
+ *     // ignore case
+ *     $.Object.same({name: "Justin"},
+ *                   {name: "JUSTIN"},
+ *                   {name: "i"})      //-> true
+ *     
+ *     // deep rule
+ *     $.Object.same({ person : { name: "Justin" } },
+ *                   { person : { name: "JUSTIN" } },
+ *                   { person : { name: "i"      } }) //-> true
+ *                   
+ *     // supplied compare function
+ *     $.Object.same({age: "Thirty"},
+ *                   {age: 30},
+ *                   {age: function( a, b ){
+ *                           if( a == "Thirty" ) { 
+ *                             a = 30
+ *                           }
+ *                           if( b == "Thirty" ) {
+ *                             b = 30
+ *                           }
+ *                           return a === b;
+ *                         }})      //-> true
+ * 
+ * @param {Object} a an object to compare
+ * @param {Object} b an object to compare
+ * @param {Object} [compares] an object that indicates how to 
+ * compare specific properties. 
+ * Typically this is a name / value pair
+ * 
+ *     $.Object.same({name: "Justin"},{name: "JUSTIN"},{name: "i"})
+ *     
+ * There are two compare functions that you can specify with a string:
+ * 
+ *   - 'i' - ignores case
+ *   - null - ignores this property
+ * 
+ * @param {Object} [deep] used internally
+ */
+var same = $.Object.same = function(a, b, compares, aParent, bParent, deep){
+	var aType = typeof a,
+		aArray = isArray(a),
+		comparesType = typeof compares,
+		compare;
+	
+	if(comparesType == 'string' || compares === null ){
+		compares = compareMethods[compares];
+		comparesType = 'function'
+	}
+	if(comparesType == 'function'){
+		return compares(a, b, aParent, bParent)
+	} 
+	compares = compares || {};
+	
+	if(deep === -1){
+		return aType === 'object' || a === b;
+	}
+	if(aType !== typeof  b || aArray !== isArray(b)){
+		return false;
+	}
+	if(a === b){
+		return true;
+	}
+	if(aArray){
+		if(a.length !== b.length){
+			return false;
+		}
+		for(var i =0; i < a.length; i ++){
+			compare = compares[i] === undefined ? compares["*"] : compares[i]
+			if(!same(a[i],b[i], a, b, compare )){
+				return false;
+			}
+		};
+		return true;
+	} else if(aType === "object" || aType === 'function'){
+		var bCopy = $.extend({}, b);
+		for(var prop in a){
+			compare = compares[prop] === undefined ? compares["*"] : compares[prop];
+			if(! same( a[prop], b[prop], compare , a, b, deep === false ? -1 : undefined )){
+				return false;
+			}
+			delete bCopy[prop];
+		}
+		// go through bCopy props ... if there is no compare .. return false
+		for(prop in bCopy){
+			if( compares[prop] === undefined || 
+			    ! same( undefined, b[prop], compares[prop] , a, b, deep === false ? -1 : undefined )){
+				return false;
+			}
+		}
+		return true;
+	} 
+	return false;
+};
+
+/**
+ * @function subsets
+ * Returns the sets in 'sets' that are a subset of checkSet
+ * @param {Object} checkSet
+ * @param {Object} sets
+ */
+$.Object.subsets = function(checkSet, sets, compares){
+	var len = sets.length,
+		subsets = [],
+		checkPropCount = propCount(checkSet),
+		setLength;
+		
+	for(var i =0; i < len; i++){
+		//check this subset
+		var set = sets[i];
+		if( $.Object.subset(checkSet, set, compares) ){
+			subsets.push(set)
+		}
+	}
+	return subsets;
+};
+/**
+ * @function subset
+ * Compares if checkSet is a subset of set
+ * @param {Object} checkSet
+ * @param {Object} set
+ * @param {Object} [compares]
+ * @param {Object} [checkPropCount]
+ */
+$.Object.subset = function(subset, set, compares){
+	// go through set {type: 'folder'} and make sure every property
+	// is in subset {type: 'folder', parentId :5}
+	// then make sure that set has fewer properties
+	// make sure we are only checking 'important' properties
+	// in subset (ones that have to have a value)
+	
+	var setPropCount =0,
+		compares = compares || {};
+			
+	for(var prop in set){
+
+		if(! same(subset[prop], set[prop], compares[prop], subset, set )  ){
+			return false;
+		} 
+	}
+	return true;
+}
+
+
+var compareMethods = {
+	"null" : function(){
+		return true;
+	},
+	i : function(a, b){
+		return (""+a).toLowerCase() == (""+b).toLowerCase()
+	}
+}
+	
+	
+})(jQuery);
+(function($){
+/**
+@page jquery.model.validations Validations
+@plugin jquery/model/validations
+@download  http://jmvcsite.heroku.com/pluginify?plugins[]=jquery/model/validations/validations.js
+@test jquery/model/validations/qunit.html
+@parent jQuery.Model
+
+In many apps, it's important to validate data before sending it to the server. 
+The jquery/model/validations plugin provides validations on models.
+
+## Example
+
+To use validations, you need to call a validate method on the Model class.
+The best place to do this is in a Class's init function.
+
+@codestart
+$.Model("Contact",{
+	init : function(){
+		// validates that birthday is in the future
+		this.validate("birthday",function(){
+			if(this.birthday > new Date){
+				return "your birthday needs to be in the past"
+			}
+		})
+	}
+},{});
+@codeend
+
+## Demo
+
+Click a person's name to update their birthday.  If you put the date
+in the future, say the year 2525, it will report back an error.
+
+@demo jquery/model/validations/validations.html
+ */
+
+//validations object is by property.  You can have validations that
+//span properties, but this way we know which ones to run.
+//  proc should return true if there's an error or the error message
+var validate = function(attrNames, options, proc) {
+	if(!proc){
+		proc = options;
+		options = {};
+	}
+	options = options || {};
+	attrNames = $.makeArray(attrNames)
+	
+	if(options.testIf && !options.testIf.call(this)){
+		return;
+	}
+	
+	var self = this;
+	$.each(attrNames, function(i, attrName) {
+		// Call the validate proc function in the instance context
+		if(!self.validations[attrName]){
+			self.validations[attrName] = [];
+		}
+		self.validations[attrName].push(function(){
+			var res = proc.call(this, this[attrName]);
+			return res === undefined ? undefined : (options.message || res);
+		})
+	});
+   
+};
+
+$.extend($.Model, {
+   /**
+    * @function jQuery.Model.static.validate
+    * @parent jquery.model.validations
+    * Validates each of the specified attributes with the given function.  See [jquery.model.validations validation] for more on validations.
+    * @param {Array|String} attrNames Attribute name(s) to to validate
+    * @param {Function} validateProc Function used to validate each given attribute. Returns nothing if valid and an error message otherwise. Function is called in the instance context and takes the value to validate.
+    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
+    */
+   validate: validate,
+   
+   /**
+    * @attribute jQuery.Model.static.validationMessages
+    * @parent jquery.model.validations
+    * The default validation error messages that will be returned by the builtin
+    * validation methods. These can be overwritten by assigning new messages
+    * to $.Model.validationMessages.&lt;message> in your application setup.
+    * 
+    * The following messages (with defaults) are available:
+    * 
+    *  * format - "is invalid"
+    *  * inclusion - "is not a valid option (perhaps out of range)"
+    *  * lengthShort - "is too short"
+    *  * lengthLong - "is too long"
+    *  * presence - "can't be empty"
+    *  * range - "is out of range"
+    * 
+    * It is important to steal jquery/model/validations before 
+    * overwriting the messages, otherwise the changes will
+    * be lost once steal loads it later.
+    * 
+    * ## Example
+    * 
+    *     $.Model.validationMessages.format = "is invalid dummy!"
+    */
+   validationMessages : {
+       format      : "is invalid",
+       inclusion   : "is not a valid option (perhaps out of range)",
+       lengthShort : "is too short",
+       lengthLong  : "is too long",
+       presence    : "can't be empty",
+       range       : "is out of range"
+   },
+
+   /**
+    * @function jQuery.Model.static.validateFormatOf
+    * @parent jquery.model.validations
+    * Validates where the values of specified attributes are of the correct form by
+    * matching it against the regular expression provided.  See [jquery.model.validations validation] for more on validations.
+    * @param {Array|String} attrNames Attribute name(s) to to validate
+    * @param {RegExp} regexp Regular expression used to match for validation
+    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
+    *
+    */
+   validateFormatOf: function(attrNames, regexp, options) {
+      validate.call(this, attrNames, options, function(value) {
+         if(  (typeof value != 'undefined' && value != '')
+         	&& String(value).match(regexp) == null )
+         {
+            return this.Class.validationMessages.format;
+         }
+      });
+   },
+
+   /**
+    * @function jQuery.Model.static.validateInclusionOf
+    * @parent jquery.model.validations
+    * Validates whether the values of the specified attributes are available in a particular
+    * array.   See [jquery.model.validations validation] for more on validations.
+    * @param {Array|String} attrNames Attribute name(s) to to validate
+    * @param {Array} inArray Array of options to test for inclusion
+    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
+    * 
+    */
+   validateInclusionOf: function(attrNames, inArray, options) {
+      validate.call(this, attrNames, options, function(value) {
+         if(typeof value == 'undefined')
+            return;
+
+         if($.grep(inArray, function(elm) { return (elm == value);}).length == 0)
+            return this.Class.validationMessages.inclusion;
+      });
+   },
+
+   /**
+    * @function jQuery.Model.static.validateLengthOf
+    * @parent jquery.model.validations
+    * Validates that the specified attributes' lengths are in the given range.  See [jquery.model.validations validation] for more on validations.
+    * @param {Array|String} attrNames Attribute name(s) to to validate
+    * @param {Number} min Minimum length (inclusive)
+    * @param {Number} max Maximum length (inclusive)
+    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
+    *
+    */
+   validateLengthOf: function(attrNames, min, max, options) {
+      validate.call(this, attrNames, options, function(value) {
+         if((typeof value == 'undefined' && min > 0) || value.length < min)
+            return this.Class.validationMessages.lengthShort + " (min=" + min + ")";
+         else if(typeof value != 'undefined' && value.length > max)
+            return this.Class.validationMessages.lengthLong + " (max=" + max + ")";
+      });
+   },
+
+   /**
+    * @function jQuery.Model.static.validatePresenceOf
+    * @parent jquery.model.validations
+    * Validates that the specified attributes are not blank.  See [jquery.model.validations validation] for more on validations.
+    * @param {Array|String} attrNames Attribute name(s) to to validate
+    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
+    *
+    */
+   validatePresenceOf: function(attrNames, options) {
+      validate.call(this, attrNames, options, function(value) {
+         if(typeof value == 'undefined' || value == "" || value === null)
+            return this.Class.validationMessages.presence;
+      });
+   },
+
+   /**
+    * @function jQuery.Model.static.validateRangeOf
+    * @parent jquery.model.validations
+    * Validates that the specified attributes are in the given numeric range.  See [jquery.model.validations validation] for more on validations.
+    * @param {Array|String} attrNames Attribute name(s) to to validate
+    * @param {Number} low Minimum value (inclusive)
+    * @param {Number} hi Maximum value (inclusive)
+    * @param {Object} options (optional) Options for the validations.  Valid options include 'message' and 'testIf'.
+    *
+    */
+   validateRangeOf: function(attrNames, low, hi, options) {
+      validate.call(this, attrNames, options, function(value) {
+         if(typeof value != 'undefined' && value < low || value > hi)
+            return this.Class.validationMessages.range + " [" + low + "," + hi + "]";
+      });
+   }
+});
+
+})(jQuery);
+(function($){
+
+/**
+ * @class Trend.Core.Message
+ * @parent Controllers
+ * @inherits Naxx.Controllers.Base
+ */
+Trend.Base('Trend.Core.Message',
+/** @Static */
+{
+	defaults : {
+		hosted: '.trend_core'
+	},
+	onElement: 'body',
+	isSingleton: true,
+	destroy: function(){
+		if(this.current == 'body')
+		{
+			$.unblockUI();
+		}
+		else
+		{
+			$(this.current).unblock();
+		}
+		this.instance().destroy();
+	},
+	current: ''
+},
+/** @Prototype */
+{
+	init : function(element, settings){
+		this.constructor.current = this.options.hosted;
+		if(this.options.hosted == 'body')
+		{
+			$.block({
+				css: {
+					border: 'solid 1px black',
+					width: 250,
+					'font-size': '10px',
+					'font-family': 'Verdana'
+				},
+				message: '<div class="blocking_message">'+this.options.message+'</div>',
+				overlayCSS: {
+					opacity: 0.5,
+					backgroundColor: '#000'
+				}
+			});
+		}
+		else
+		{
+			$(this.options.hosted).block({
+				css: {
+					border: 'solid 1px black',
+					width: 250,
+					'font-size': '10px',
+					'font-family': 'Verdana'
+				},
+				message: '<div class="blocking_message">'+this.options.message+'</div>',
+				overlayCSS: {
+					opacity: 0.5,
+					backgroundColor: '#000'
+				}
+			});
+		}
+	}
+})
+
+})(jQuery);
+(function( $ ) {
+	
+	//used to check urls
+	
+
+	
+	// the pre-filter needs to re-route the url
+	
+	$.ajaxPrefilter( function( settings, originalOptions, jqXHR ) {
+	  	// if fixtures are on
+		if(! $.fixture.on) {
+			return;
+		}
+		
+		// add the fixture option if programmed in
+		var data = overwrite(settings);
+		
+		// if we don't have a fixture, do nothing
+		if(!settings.fixture){
+			if(window.location.protocol === "file:"){
+				;
+			}
+			return;
+		}
+		
+		//if referencing something else, update the fixture option
+		if ( typeof settings.fixture === "string" && $.fixture[settings.fixture] ) {
+			settings.fixture = $.fixture[settings.fixture];
+		}
+		
+		// if a string, we just point to the right url
+		if ( typeof settings.fixture == "string" ) {
+			var url = settings.fixture;
+			
+			if (/^\/\//.test(url) ) {
+				url = steal.root.mapJoin(settings.fixture.substr(2))+'';
+			}
+			
+			settings.url = url;
+			settings.data = null;
+			settings.type = "GET";
+			if (!settings.error ) {
+				settings.error = function( xhr, error, message ) {
+					throw "fixtures.js Error " + error + " " + message;
+				};
+			}
+
+		}else {
+			
+			
+			//it's a function ... add the fixture datatype so our fixture transport handles it
+			// TODO: make everything go here for timing and other fun stuff
+			settings.dataTypes.splice(0,0,"fixture");
+			
+			if(data){
+				$.extend(originalOptions.data, data)
+			}
+			// add to settings data from fixture ...
+			
+		}
+		
+	});
+		
+	
+	$.ajaxTransport( "fixture", function( s, original ) {
+
+		// remove the fixture from the datatype
+		s.dataTypes.shift();
+		
+		//we'll return the result of the next data type
+		var next = s.dataTypes[0],
+			timeout;
+		
+		return {
+		
+			send: function( headers , callback ) {
+				
+				// callback after a timeout
+				timeout = setTimeout(function() {
+					
+					// get the callback data from the fixture function
+					var response = s.fixture(original, s, headers);
+					
+					// normalize the fixture data into a response
+					if(!$.isArray(response)){
+						var tmp = [{}];
+						tmp[0][next] = response
+						response = tmp;
+					}
+					if(typeof response[0] != 'number'){
+						response.unshift(200,"success")
+					}
+					
+					// make sure we provide a response type that matches the first datatype (typically json)
+					if(!response[2] || !response[2][next]){
+						var tmp = {}
+						tmp[next] = response[2];
+						response[2] = tmp;
+					}
+					
+					// pass the fixture data back to $.ajax
+					callback.apply(null, response );
+				}, $.fixture.delay);
+			},
+			
+			abort: function() {
+				clearTimeout(timeout)
+			}
+		};
+		
+	});
+
+
+
+	var typeTest = /^(script|json|test|jsonp)$/,
+		// a list of 'overwrite' settings object
+		overwrites = [],
+		// returns the index of an overwrite function
+		find = function(settings, exact){
+			for(var i =0; i < overwrites.length; i++){
+				if($fixture._similar(settings, overwrites[i], exact)){
+					return i;
+				}
+			}
+			return -1;
+		},
+		// overwrites the settings fixture if an overwrite matches
+		overwrite = function(settings){
+			var index = find(settings);
+			if(index > -1){
+				settings.fixture = overwrites[index].fixture;
+				return $fixture._getData(overwrites[index].url, settings.url)
+			}
+
+		},
+		/**
+		 * Makes an attempt to guess where the id is at in the url and returns it.
+		 * @param {Object} settings
+		 */
+		getId = function(settings){
+        	var id = settings.data.id;
+
+			if(id === undefined && typeof settings.data === "number") {
+				id = settings.data;
+			}
+
+			/*
+			Check for id in params(if query string)
+			If this is just a string representation of an id, parse
+			if(id === undefined && typeof settings.data === "string") {
+				id = settings.data;
+			}
+			//*/
+
+			if(id === undefined){
+                settings.url.replace(/\/(\d+)(\/|$|\.)/g, function(all, num){
+                    id = num;
+                });
+            }
+			
+            if(id === undefined){
+                id = settings.url.replace(/\/(\w+)(\/|$|\.)/g, function(all, num){
+                    if(num != 'update'){
+                        id = num;
+                    }
+                })
+            }
+			
+			if(id === undefined){ // if still not set, guess a random number
+                id = Math.round(Math.random()*1000)
+            }
+
+			return id;
+		};
+
+	/**
+	 * @function jQuery.fixture
+	 * @plugin jquery/dom/fixture
+	 * @download http://jmvcsite.heroku.com/pluginify?plugins[]=jquery/dom/fixture/fixture.js
+	 * @test jquery/dom/fixture/qunit.html
+	 * @parent dom
+	 * 
+	 * <code>$.fixture</code> intercepts a AJAX request and simulates
+	 * the response with a file or function. They are a great technique 
+	 * when you want to develop JavaScript 
+	 * independently of the backend. 
+	 * 
+	 * ## Types of Fixtures
+	 * 
+	 * There are two common ways of using fixtures.  The first is to 
+	 * map Ajax requests to another file.  The following 
+	 * intercepts requests to <code>/tasks.json</code> and directs them 
+	 * to <code>fixtures/tasks.json</code>:
+	 * 
+	 *     $.fixture("/tasks.json","fixtures/tasks.json");
+	 *     
+	 * The other common option is to generate the Ajax response with
+	 * a function.  The following intercepts updating tasks at
+	 * <code>/tasks/ID.json</code> and responds with updated data:
+	 * 
+	 *     $.fixture("PUT /tasks/{id}.json", function(original, settings, headers){
+	 *        return { updatedAt : new Date().getTime() }
+	 *     })
+	 * 
+	 * We categorize fixtures into the following types:
+	 * 
+	 *   - __Static__ - the response is in a file.
+	 *   - __Dynamic__ - the response is generated by a function.
+	 * 
+	 * There are different ways to lookup static and dynamic fixtures.
+	 * 
+	 * ## Static Fixtures
+	 * 
+	 * Static fixtures use an alternate url as the response of the Ajax request.
+	 * 
+	 *     // looks in fixtures/tasks1.json relative to page
+	 *     $.fixture("tasks/1", "fixtures/task1.json");
+	 *     
+	 *     $.fixture("tasks/1", "//fixtures/task1.json");
+	 * 
+	 * ## Dynamic Fixtures
+	 * 
+	 * Dynamic Fixtures are functions that get the details of 
+	 * the Ajax request and return the result of the mocked service
+	 * request from your server.  
+	 * 
+	 * For example, the following returns a successful response 
+	 * with JSON data from the server:
+	 * 
+	 *     $.fixture("/foobar.json", function(orig, settings, headers){
+	 *       return [200, "success", {json: {foo: "bar" } }, {} ]
+	 *     })
+	 * 
+	 * The fixture function has the following signature:
+	 * 
+	 *     function( originalOptions, options, headers ) {
+	 *       return [ status, statusText, responses, responseHeaders ]
+	 *     }
+	 * 
+	 * where the fixture function is called with:
+	 * 
+	 *   - originalOptions - are the options provided to the ajax method, unmodified,
+	 *     and thus, without defaults from ajaxSettings
+	 *   - options - are the request options
+	 *   - headers - a map of key/value request headers
+	 * 
+	 * and the fixture function returns an array as arguments for  ajaxTransport's <code>completeCallback</code> with:
+	 * 
+	 *   - status - is the HTTP status code of the response.
+	 *   - statusText - the status text of the response
+	 *   - responses - a map of dataType/value that contains the responses for each data format supported
+	 *   - headers - response headers
+	 * 
+	 * However, $.fixture handles the 
+	 * common case where you want a successful response with JSON data.  The 
+	 * previous can be written like:
+	 * 
+	 *     $.fixture("/foobar.json", function(orig, settings, headers){
+	 *       return {foo: "bar" };
+	 *     })
+	 * 
+	 * If you want to return an array of data, wrap your array in another array:
+	 * 
+	 *     $.fixture("/tasks.json", function(orig, settings, headers){
+	 *       return [ [ "first","second","third"] ];
+	 *     })
+	 * 
+	 * $.fixture works closesly with jQuery's 
+	 * ajaxTransport system.  Understanding it is the key to creating advanced
+	 * fixtures.
+	 * 
+	 * ### Templated Urls
+	 * 
+	 * Often, you want a dynamic fixture to handle urls 
+	 * for multiple resources (for example a REST url scheme). $.fixture's
+	 * templated urls allow you to match urls with a wildcard.  
+	 * 
+	 * The following example simulates services that get and update 100 todos.  
+	 * 
+	 *     // create todos
+	 *     var todos = {};
+	 *     for(var i = 0; i < 100; i++) {
+	 *       todos[i] = {
+	 *         id: i,
+	 *         name: "Todo "+i
+	 *       }
+	 *     }
+	 *     $.fixture("GET /todos/{id}", function(orig){
+	 *       // return the JSON data
+	 *       // notice that id is pulled from the url and added to data
+	 *       return todos[orig.data.id]
+	 *     })
+	 *     $.fixture("PUT /todos/{id}", function(orig){
+	 *       // update the todo's data
+	 *       $.extend( todos[orig.data.id], orig.data );
+	 *       
+	 *       // return data
+	 *       return {};
+	 *     })
+	 * 
+	 * Notice that data found in templated urls (ex: <code>{id}</code>) is added to the original
+	 * data object.
+	 * 
+	 * ## Simulating Errors
+	 * 
+	 * The following simulates an unauthorized request 
+	 * to <code>/foo</code>.
+	 * 
+	 *     $.fixture("/foo", function(){
+	 * 		return [401,"{type: 'unauthorized'}"]
+	 * 	   });
+	 * 
+	 * This could be received by the following Ajax request:
+	 * 
+	 *     $.ajax({
+	 *       url: '/foo',
+	 *       error : function(jqXhr, status, statusText){
+	 *         // status === 'error'
+	 *         // statusText === "{type: 'unauthorized'}"
+	 *       }
+	 *     })
+	 * 
+	 * ## Turning off Fixtures
+	 * 
+	 * You can remove a fixture by passing <code>null</code> for the fixture option:
+	 * 
+	 *     // add a fixture
+	 *     $.fixture("GET todos.json","//fixtures/todos.json");
+	 *     
+	 *     // remove the fixture
+	 *     $.fixture("GET todos.json", null)
+	 *     
+	 * You can also set [jQuery.fixture.on $.fixture.on] to false:
+	 * 
+	 *     $.fixture.on = false;
+	 * 
+	 * ## Make
+	 * 
+	 * [jQuery.fixture.make $.fixture.make] makes a CRUD service layer that handles sorting, grouping,
+	 * filtering and more.
+	 * 
+	 * ## Testing Performance
+	 * 
+	 * Dynamic fixtures are awesome for performance testing.  Want to see what 
+	 * 10000 files does to your app's performance?  Make a fixture that returns 10000 items.
+	 * 
+	 * What to see what the app feels like when a request takes 5 seconds to return?  Set
+	 * [jQuery.fixture.delay] to 5000.
+	 * 
+	 * @demo jquery/dom/fixture/fixture.html
+	 * 
+	 * @param {Object|String} settings Configures the AJAX requests the fixture should 
+	 * intercept.  If an __object__ is passed, the object's properties and values
+	 * are matched against the settings passed to $.ajax.  
+	 * 
+	 * If a __string__ is passed, it can be used to match the url and type. Urls
+	 * can be templated, using <code>{NAME}</code> as wildcards.  
+	 * 
+	 * @param {Function|String} fixture The response to use for the AJAX 
+	 * request. If a __string__ url is passed, the ajax request is redirected
+	 * to the url. If a __function__ is provided, it looks like:
+	 * 
+	 *     fixture( originalSettings, settings, headers	)
+	 *     
+	 * where:
+	 * 
+	 *   - originalSettings - the orignal settings passed to $.ajax
+	 *   - settings - the settings after all filters have run
+	 *   - headers - request headers
+	 *   
+	 * If __null__ is passed, and there is a fixture at settings, that fixture will be removed,
+	 * allowing the AJAX request to behave normally.
+	 */
+	var $fixture = $.fixture = function( settings , fixture ){
+		// if we provide a fixture ...
+		if(fixture !== undefined){
+			if(typeof settings == 'string'){
+				// handle url strings
+				var matches = settings.match(/(GET|POST|PUT|DELETE) (.+)/i);
+				if(!matches){
+					settings  = {
+						url : settings
+					};
+				} else {
+					settings  = {
+						url : matches[2],
+						type: matches[1]
+					};
+				}
+				
+			}
+			
+			//handle removing.  An exact match if fixture was provided, otherwise, anything similar
+			var index = find(settings, !!fixture);
+			if(index > -1){
+				overwrites.splice(index,1)
+			}
+			if(fixture == null){
+				return 
+			}
+			settings.fixture = fixture;
+			overwrites.push(settings)
+		}
+	};
+	var replacer = $.String._regs.replacer;
+	
+	$.extend($.fixture, {
+		// given ajax settings, find an overwrite
+		_similar : function(settings, overwrite, exact){
+			if(exact){
+				return $.Object.same(settings , overwrite, {fixture :  null})
+			} else {
+				return $.Object.subset(settings, overwrite, $.fixture._compare)
+			}
+		},
+		_compare : {
+			url : function(a, b){
+				return !! $fixture._getData(b, a)
+			},
+			fixture : null,
+			type : "i"
+		},
+		// gets data from a url like "/todo/{id}" given "todo/5"
+		_getData : function(fixtureUrl, url){
+			var order = [],
+				fixtureUrlAdjusted = fixtureUrl.replace('.', '\\.').replace('?', '\\?'),
+				res = new RegExp(fixtureUrlAdjusted.replace(replacer, function(whole, part){
+			  		order.push(part)
+			 		 return "([^\/]+)"
+				})+"$").exec(url),
+				data = {};
+			
+			if(!res){
+				return null;
+			}
+			res.shift();
+			$.each(order, function(i, name){
+				data[name] = res.shift()
+			})
+			return data;
+		},
+		/**
+		 * @hide
+		 * Provides a rest update fixture function
+		 */
+		"-restUpdate": function( settings ) {
+			return [200,"succes",{
+					id: getId(settings)
+				},{
+					location: settings.url+"/"+getId(settings)
+				}];
+		},
+		
+		/**
+		 * @hide
+		 * Provides a rest destroy fixture function
+		 */
+		"-restDestroy": function( settings, cbType ) {
+			return {};
+		},
+		
+		/**
+		 * @hide
+		 * Provides a rest create fixture function
+		 */
+		"-restCreate": function( settings, cbType, nul, id ) {
+			var id = id || parseInt(Math.random() * 100000, 10);
+			return [200,"succes",{
+						id: id
+					},{
+						location: settings.url+"/"+id	
+					}];
+		},
+		
+		/**
+		 * @function jQuery.fixture.make
+		 * @parent jQuery.fixture
+		 * Used to make fixtures for findAll / findOne style requests.
+		 * 
+		 *     //makes a nested list of messages
+		 *     $.fixture.make(["messages","message"],1000, function(i, messages){
+		 *       return {
+		 *         subject: "This is message "+i,
+		 *         body: "Here is some text for this message",
+		 *         date: Math.floor( new Date().getTime() ),
+		 *         parentId : i < 100 ? null : Math.floor(Math.random()*i)
+		 *       }
+		 *     })
+		 *     //uses the message fixture to return messages limited by offset, limit, order, etc.
+		 *     $.ajax({
+		 *       url: "messages",
+		 *       data:{ 
+		 *          offset: 100, 
+		 *          limit: 50, 
+		 *          order: ["date ASC"],
+		 *          parentId: 5},
+		 *        },
+		 *        fixture: "-messages",
+		 *        success: function( messages ) {  ... }
+		 *     });
+		 * 
+		 * @param {Array|String} types An array of the fixture names or the singular fixture name.
+		 * If an array, the first item is the plural fixture name (prefixed with -) and the second
+		 * item is the singular name.  If a string, it's assumed to be the singular fixture name.  Make
+		 * will simply add s to the end of it for the plural name.
+		 * @param {Number} count the number of items to create
+		 * @param {Function} make a function that will return json data representing the object.  The
+		 * make function is called back with the id and the current array of items.
+		 * @param {Function} filter (optional) a function used to further filter results. Used for to simulate 
+		 * server params like searchText or startDate.  The function should return true if the item passes the filter, 
+		 * false otherwise.  For example:
+		 * 
+		 * 
+		 *     function(item, settings){
+		 *       if(settings.data.searchText){
+		 * 	       var regex = new RegExp("^"+settings.data.searchText)
+		 * 	      return regex.test(item.name);
+		 *       }
+		 *     }
+		 * 
+		 */
+		make: function( types, count, make, filter ) {
+			if(typeof types === "string"){
+				types = [types+"s",types ]
+			}
+			// make all items
+			var items = ($.fixture["~" + types[0]] = []), // TODO: change this to a hash
+				findOne = function(id){
+					for ( var i = 0; i < items.length; i++ ) {
+						if ( id == items[i].id ) {
+							return items[i];
+						}
+					}
+				};
+				
+			for ( var i = 0; i < (count); i++ ) {
+				//call back provided make
+				var item = make(i, items);
+
+				if (!item.id ) {
+					item.id = i;
+				}
+				items.push(item);
+			}
+			//set plural fixture for findAll
+			$.fixture["-" + types[0]] = function( settings ) {
+				//copy array of items
+				var retArr = items.slice(0);
+				settings.data = settings.data || {};
+				//sort using order
+				//order looks like ["age ASC","gender DESC"]
+				$.each((settings.data.order || []).slice(0).reverse(), function( i, name ) {
+					var split = name.split(" ");
+					retArr = retArr.sort(function( a, b ) {
+						if ( split[1].toUpperCase() !== "ASC" ) {
+							if( a[split[0]] < b[split[0]] ) {
+								return 1;
+							} else if(a[split[0]] == b[split[0]]){
+								return 0
+							} else {
+								return -1;
+							}
+						}
+						else {
+							if( a[split[0]] < b[split[0]] ) {
+								return -1;
+							} else if(a[split[0]] == b[split[0]]){
+								return 0
+							} else {
+								return 1;
+							}
+						}
+					});
+				});
+
+				//group is just like a sort
+				$.each((settings.data.group || []).slice(0).reverse(), function( i, name ) {
+					var split = name.split(" ");
+					retArr = retArr.sort(function( a, b ) {
+						return a[split[0]] > b[split[0]];
+					});
+				});
+
+
+				var offset = parseInt(settings.data.offset, 10) || 0,
+					limit = parseInt(settings.data.limit, 10) || (items.length - offset),
+					i = 0;
+
+				//filter results if someone added an attr like parentId
+				for ( var param in settings.data ) {
+					i=0;
+					if ( settings.data[param] !== undefined && // don't do this if the value of the param is null (ignore it)
+						(param.indexOf("Id") != -1 || param.indexOf("_id") != -1) ) {
+						while ( i < retArr.length ) {
+							if ( settings.data[param] != retArr[i][param] ) {
+								retArr.splice(i, 1);
+							} else {
+								i++;
+							}
+						}
+					}
+				}
+				
+				
+				if( filter ) {
+					i = 0;
+					while (i < retArr.length) {
+						if (!filter(retArr[i], settings)) {
+							retArr.splice(i, 1);
+						} else {
+							i++;
+						}
+					}
+				}
+
+				//return data spliced with limit and offset
+				return [{
+					"count": retArr.length,
+					"limit": settings.data.limit,
+					"offset": settings.data.offset,
+					"data": retArr.slice(offset, offset + limit)
+				}];
+			};
+            // findOne
+			$.fixture["-" + types[1]] = function( settings ) {
+				var item = findOne(getId(settings));
+				return item ? [item] : [];
+			};
+            // update
+            $.fixture["-" + types[1]+"Update"] = function( settings, cbType ) {
+                var id = getId(settings);
+
+                // TODO: make it work with non-linear ids ..
+                $.extend(findOne(id), settings.data);
+				return $.fixture["-restUpdate"](settings, cbType)
+			};
+			$.fixture["-" + types[1]+"Destroy"] = function( settings, cbType ) {
+				var id = getId(settings);
+				for(var i = 0; i < items.length; i ++ ){
+					if(items[i].id == id){
+						items.splice(i, 1);
+						break;
+					}
+				}
+				
+                // TODO: make it work with non-linear ids ..
+                $.extend(findOne(id), settings.data);
+				return $.fixture["-restDestroy"](settings, cbType)
+			};
+			$.fixture["-" + types[1]+"Create"] = function( settings, cbType ) {
+                var item = make(items.length, items);
+				
+				$.extend(item, settings.data);
+				
+				if(!item.id){
+					item.id = items.length;
+				}
+				
+				items.push(item);
+				
+				return $.fixture["-restCreate"](settings, cbType, undefined, item.id );
+			};
+			
+			
+			return {
+				getId: getId,
+				findOne : findOne,
+				find : function(settings){
+					return findOne( getId(settings) );
+				}
+			}
+		},
+		/**
+		 * @function jQuery.fixture.rand
+		 * @parent jQuery.fixture
+		 * 
+		 * Creates random integers or random arrays of 
+		 * other arrays. 
+		 * 
+		 * ## Examples
+		 * 
+		 *     var rand = $.fixture.rand;
+		 *     
+		 *     // get a random integer between 0 and 10 (inclusive)
+		 *     rand(11);
+		 *     
+		 *     // get a random number between -5 and 5 (inclusive)
+		 *     rand(-5, 6);
+		 *     
+		 *     // pick a random item from an array
+		 *     rand(["j","m","v","c"],1)[0]
+		 *     
+		 *     // pick a random number of items from an array
+		 *     rand(["j","m","v","c"])
+		 *     
+		 *     // pick 2 items from an array
+		 *     rand(["j","m","v","c"],2)
+		 *     
+		 *     // pick between 2 and 3 items at random
+		 *     rand(["j","m","v","c"],2,3)
+		 *     
+		 * 
+		 * @param {Array|Number} arr An array of items to select from.
+		 * If a number is provided, a random number is returned.
+		 * If min and max are not provided, a random number of items are selected
+		 * from this array.    
+		 * @param {Number} [min] If only min is provided, min items 
+		 * are selected.
+		 * @param {Number} [max] If min and max are provided, a random number of
+		 * items between min and max (inclusive) is selected.
+		 */
+		rand : function(arr, min, max){
+			if(typeof arr == 'number'){
+				if(typeof min  == 'number'){
+					return arr+ Math.floor(Math.random() * (min - arr) );
+				} else {
+					return Math.floor(Math.random() * arr);
+				}
+				
+			}
+			var rand = arguments.callee;
+			// get a random set
+			if(min === undefined){
+				return rand(arr, rand(arr.length+1))
+			}
+			// get a random selection of arr
+			var res = [];
+			arr = arr.slice(0);
+			// set max
+			if(!max){
+				max = min;
+			}
+			//random max
+			max = min + Math.round(  rand(max - min) )
+			for(var i=0; i < max; i++){
+				res.push(arr.splice( rand(arr.length), 1  )[0])
+			}
+			return res;
+		},
+		/**
+		 * @hide
+		 * Use $.fixture.xhr to create an object that looks like an xhr object. 
+		 * 
+		 * ## Example
+		 * 
+		 * The following example shows how the -restCreate fixture uses xhr to return 
+		 * a simulated xhr object:
+		 * @codestart
+		 * "-restCreate" : function( settings, cbType ) {
+		 *   switch(cbType){
+		 *     case "success": 
+		 *       return [
+		 *         {id: parseInt(Math.random()*1000)}, 
+		 *         "success", 
+		 *         $.fixture.xhr()];
+		 *     case "complete":
+		 *       return [ 
+		 *         $.fixture.xhr({
+		 *           getResponseHeader: function() { 
+		 *             return settings.url+"/"+parseInt(Math.random()*1000);
+		 *           }
+		 *         }),
+		 *         "success"];
+		 *   }
+		 * }
+		 * @codeend
+		 * @param {Object} [xhr] properties that you want to overwrite
+		 * @return {Object} an object that looks like a successful XHR object.
+		 */
+		xhr: function( xhr ) {
+			return $.extend({}, {
+				abort: $.noop,
+				getAllResponseHeaders: function() {
+					return "";
+				},
+				getResponseHeader: function() {
+					return "";
+				},
+				open: $.noop,
+				overrideMimeType: $.noop,
+				readyState: 4,
+				responseText: "",
+				responseXML: null,
+				send: $.noop,
+				setRequestHeader: $.noop,
+				status: 200,
+				statusText: "OK"
+			}, xhr);
+		},
+		/**
+		 * @attribute on
+		 * On lets you programatically turn off fixtures.  This is mostly used for testing.
+		 * 
+		 *     $.fixture.on = false
+		 *     Task.findAll({}, function(){
+		 *       $.fixture.on = true;
+		 *     })
+		 */
+		on : true
+	});
+	/**
+	 * @attribute $.fixture.delay
+	 * @parent $.fixture
+	 * Sets the delay in milliseconds between an ajax request is made and
+	 * the success and complete handlers are called.  This only sets
+	 * functional fixtures.  By default, the delay is 200ms.
+	 * @codestart
+	 * steal('jquery/dom/fixtures').then(function(){
+	 *   $.fixture.delay = 1000;
+	 * })
+	 * @codeend
+	 */
+	$.fixture.delay = 200;
+
+	$.fixture["-handleFunction"] = function( settings ) {
+		if ( typeof settings.fixture === "string" && $.fixture[settings.fixture] ) {
+			settings.fixture = $.fixture[settings.fixture];
+		}
+		if ( typeof settings.fixture == "function" ) {
+			setTimeout(function() {
+				if ( settings.success ) {
+					settings.success.apply(null, settings.fixture(settings, "success"));
+				}
+				if ( settings.complete ) {
+					settings.complete.apply(null, settings.fixture(settings, "complete"));
+				}
+			}, $.fixture.delay);
+			return true;
+		}
+		return false;
+	};
+
+	
+	
+    /**
+  	 * @page jquery.fixture.0organizing Organizing Fixtures
+  	 * @parent jQuery.fixture
+	 * 
+	 * The __best__ way of organizing fixtures is to have a 'fixtures.js' file that steals
+	 * <code>jquery/dom/fixture</code> and defines all your fixtures.  For example,
+	 * if you have a 'todo' application, you might 
+	 * have <code>todo/fixtures/fixtures.js</code> look like:
+	 * 
+	 *     steal({
+	 *             path: '//jquery/dom/fixture.js',
+	 *             ignore: true
+	 *           })
+	 *           .then(function(){
+	 *       
+	 *       $.fixture({
+	 *           type: 'get',  
+	 *           url: '/services/todos.json'
+	 *         },
+	 *         '//todo/fixtures/todos.json');
+	 *         
+	 *       $.fixture({
+	 *           type: 'post',  
+	 *           url: '/services/todos.json'
+	 *         },
+	 *         function(settings){
+	 *         	return {id: Math.random(), 
+	 *                  name: settings.data.name}
+	 *         });
+	 *         
+	 *     })
+	 * 
+	 * __Notice__: We used steal's ignore option to prevent 
+	 * loading the fixture plugin in production.
+	 * 
+	 * Finally, we steal <code>todo/fixtures/fixtures.js</code> in the 
+	 * app file (<code>todo/todo.js</code>) like:
+	 * 
+	 * 
+	 *     steal({path: '//todo/fixtures/fixtures.js',ignore: true});
+	 *     
+	 *     //start of your app's steals
+	 *     steal( ... )
+	 * 
+	 * We typically keep it a one liner so it's easy to comment out.
+	 * 
+	 * ## Switching Between Sets of Fixtures
+	 * 
+	 * If you are using fixtures for testing, you often want to use different
+	 * sets of fixtures.  You can add something like the following to your fixtures.js file:
+	 * 
+	 *     if( /fixtureSet1/.test( window.location.search) ){
+	 *       $.fixture("/foo","//foo/fixtures/foo1.json');
+	 *     } else if(/fixtureSet2/.test( window.location.search)){
+	 *       $.fixture("/foo","//foo/fixtures/foo1.json');
+	 *     } else {
+	 *       // default fixtures (maybe no fixtures)
+	 *     }
+	 * 
+	 */
+	 //Expose this for fixture debugging
+	 $.fixture.overwrites = overwrites;
+})(jQuery);
+/*!
+ * @documentjs-ignore
  * jQuery UI 1.8.15
  *
  * Copyright 2011, AUTHORS.txt (http://jqueryui.com/about)
@@ -24936,1091 +28711,6 @@ $.extend( $.ui.tabs.prototype, {
 })( jQuery );
 ;
 (function( $ ) {
-	// ------- HELPER FUNCTIONS  ------
-	
-	// Binds an element, returns a function that unbinds
-	var bind = function( el, ev, callback ) {
-		var wrappedCallback,
-			binder = el.bind && el.unbind ? el : $(isFunction(el) ? [el] : el);
-		//this is for events like >click.
-		if ( ev.indexOf(">") === 0 ) {
-			ev = ev.substr(1);
-			wrappedCallback = function( event ) {
-				if ( event.target === el ) {
-					callback.apply(this, arguments);
-				} 
-			};
-		}
-		binder.bind(ev, wrappedCallback || callback);
-		// if ev name has >, change the name and bind
-		// in the wrapped callback, check that the element matches the actual element
-		return function() {
-			binder.unbind(ev, wrappedCallback || callback);
-			el = ev = callback = wrappedCallback = null;
-		};
-	},
-		makeArray = $.makeArray,
-		isArray = $.isArray,
-		isFunction = $.isFunction,
-		extend = $.extend,
-		Str = $.String,
-		each = $.each,
-		
-		STR_PROTOTYPE = 'prototype',
-		STR_CONSTRUCTOR = 'constructor',
-		slice = Array[STR_PROTOTYPE].slice,
-		
-		// Binds an element, returns a function that unbinds
-		delegate = function( el, selector, ev, callback ) {
-			var binder = el.delegate && el.undelegate ? el : $(isFunction(el) ? [el] : el)
-			binder.delegate(selector, ev, callback);
-			return function() {
-				binder.undelegate(selector, ev, callback);
-				binder = el = ev = callback = selector = null;
-			};
-		},
-		
-		// calls bind or unbind depending if there is a selector
-		binder = function( el, ev, callback, selector ) {
-			return selector ? delegate(el, selector, ev, callback) : bind(el, ev, callback);
-		},
-		
-		// moves 'this' to the first argument, wraps it with jQuery if it's an element
-		shifter = function shifter(context, name) {
-			var method = typeof name == "string" ? context[name] : name;
-			return function() {
-				context.called = name;
-    			return method.apply(context, [this.nodeName ? $(this) : this].concat( slice.call(arguments, 0) ) );
-			};
-		},
-		// matches dots
-		dotsReg = /\./g,
-		// matches controller
-		controllersReg = /_?controllers?/ig,
-		//used to remove the controller from the name
-		underscoreAndRemoveController = function( className ) {
-			return Str.underscore(className.replace("jQuery.", "").replace(dotsReg, '_').replace(controllersReg, ""));
-		},
-		// checks if it looks like an action
-		actionMatcher = /[^\w]/,
-		// handles parameterized action names
-		parameterReplacer = /\{([^\}]+)\}/g,
-		breaker = /^(?:(.*?)\s)?([\w\.\:>]+)$/,
-		basicProcessor,
-		data = function(el, data){
-			return $.data(el, "controllers", data)
-		};
-	/**
-	 * @class jQuery.Controller
-	 * @parent jquerymx
-	 * @plugin jquery/controller
-	 * @download  http://jmvcsite.heroku.com/pluginify?plugins[]=jquery/controller/controller.js
-	 * @test jquery/controller/qunit.html
-	 * @inherits jQuery.Class
-	 * @description jQuery widget factory.
-	 * 
-	 * jQuery.Controller helps create organized, memory-leak free, rapidly performing
-	 * jQuery widgets.  Its extreme flexibility allows it to serve as both
-	 * a traditional View and a traditional Controller.  
-	 * 
-	 * This means it is used to
-	 * create things like tabs, grids, and contextmenus as well as 
-	 * organizing them into higher-order business rules.
-	 * 
-	 * Controllers make your code deterministic, reusable, organized and can tear themselves 
-	 * down auto-magically. Read about [http://jupiterjs.com/news/writing-the-perfect-jquery-plugin 
-	 * the theory behind controller] and 
-	 * a [http://jupiterjs.com/news/organize-jquery-widgets-with-jquery-controller walkthrough of its features]
-	 * on Jupiter's blog. [mvc.controller Get Started with jQueryMX] also has a great walkthrough.
-	 * 
-	 * Controller inherits from [jQuery.Class $.Class] and makes heavy use of 
-	 * [http://api.jquery.com/delegate/ event delegation]. Make sure 
-	 * you understand these concepts before using it.
-	 * 
-	 * ## Basic Example
-	 * 
-	 * Instead of
-	 * 
-	 * 
-	 *     $(function(){
-	 *       $('#tabs').click(someCallbackFunction1)
-	 *       $('#tabs .tab').click(someCallbackFunction2)
-	 *       $('#tabs .delete click').click(someCallbackFunction3)
-	 *     });
-	 * 
-	 * do this
-	 * 
-	 *     $.Controller('Tabs',{
-	 *       click: function() {...},
-	 *       '.tab click' : function() {...},
-	 *       '.delete click' : function() {...}
-	 *     })
-	 *     $('#tabs').tabs();
-	 * 
-	 * 
-	 * ## Tabs Example
-	 * 
-	 * @demo jquery/controller/controller.html
-	 * 
-	 * ## Using Controller
-	 * 
-	 * Controller helps you build and organize jQuery plugins.  It can be used
-	 * to build simple widgets, like a slider, or organize multiple
-	 * widgets into something greater.
-	 * 
-	 * To understand how to use Controller, you need to understand 
-	 * the typical lifecycle of a jQuery widget and how that maps to
-	 * controller's functionality:
-	 * 
-	 * ### A controller class is created.
-	 *       
-	 *     $.Controller("MyWidget",
-	 *     {
-	 *       defaults :  {
-	 *         message : "Remove Me"
-	 *       }
-	 *     },
-	 *     {
-	 *       init : function(rawEl, rawOptions){ 
-	 *         this.element.append(
-	 *            "<div>"+this.options.message+"</div>"
-	 *           );
-	 *       },
-	 *       "div click" : function(div, ev){ 
-	 *         div.remove();
-	 *       }  
-	 *     }) 
-	 *     
-	 * This creates a <code>$.fn.my_widget</code> jQuery helper function
-	 * that can be used to create a new controller instance on an element. Find
-	 * more information [jquery.controller.plugin  here] about the plugin gets created 
-	 * and the rules around its name.
-	 *       
-	 * ### An instance of controller is created on an element
-	 * 
-	 *     $('.thing').my_widget(options) // calls new MyWidget(el, options)
-	 * 
-	 * This calls <code>new MyWidget(el, options)</code> on 
-	 * each <code>'.thing'</code> element.  
-	 *     
-	 * When a new [jQuery.Class Class] instance is created, it calls the class's
-	 * prototype setup and init methods. Controller's [jQuery.Controller.prototype.setup setup]
-	 * method:
-	 *     
-	 *  - Sets [jQuery.Controller.prototype.element this.element] and adds the controller's name to element's className.
-	 *  - Merges passed in options with defaults object and sets it as [jQuery.Controller.prototype.options this.options]
-	 *  - Saves a reference to the controller in <code>$.data</code>.
-	 *  - [jquery.controller.listening Binds all event handler methods].
-	 *   
-	 * 
-	 * ### The controller responds to events
-	 * 
-	 * Typically, Controller event handlers are automatically bound.  However, there are
-	 * multiple ways to [jquery.controller.listening listen to events] with a controller.
-	 * 
-	 * Once an event does happen, the callback function is always called with 'this' 
-	 * referencing the controller instance.  This makes it easy to use helper functions and
-	 * save state on the controller.
-	 * 
-	 * 
-	 * ### The widget is destroyed
-	 * 
-	 * If the element is removed from the page, the 
-	 * controller's [jQuery.Controller.prototype.destroy] method is called.
-	 * This is a great place to put any additional teardown functionality.
-	 * 
-	 * You can also teardown a controller programatically like:
-	 * 
-	 *     $('.thing').my_widget('destroy');
-	 * 
-	 * ## Todos Example
-	 * 
-	 * Lets look at a very basic example - 
-	 * a list of todos and a button you want to click to create a new todo.
-	 * Your HTML might look like:
-	 * 
-	 * @codestart html
-	 * &lt;div id='todos'>
-	 *  &lt;ol>
-	 *    &lt;li class="todo">Laundry&lt;/li>
-	 *    &lt;li class="todo">Dishes&lt;/li>
-	 *    &lt;li class="todo">Walk Dog&lt;/li>
-	 *  &lt;/ol>
-	 *  &lt;a class="create">Create&lt;/a>
-	 * &lt;/div>
-	 * @codeend
-	 * 
-	 * To add a mousover effect and create todos, your controller might look like:
-	 * 
-	 *     $.Controller('Todos',{
-	 *       ".todo mouseover" : function( el, ev ) {
-	 *         el.css("backgroundColor","red")
-	 *       },
-	 *       ".todo mouseout" : function( el, ev ) {
-	 *         el.css("backgroundColor","")
-	 *       },
-	 *       ".create click" : function() {
-	 *         this.find("ol").append("<li class='todo'>New Todo</li>"); 
-	 *       }
-	 *     })
-	 * 
-	 * Now that you've created the controller class, you've must attach the event handlers on the '#todos' div by
-	 * creating [jQuery.Controller.prototype.setup|a new controller instance].  There are 2 ways of doing this.
-	 * 
-	 * @codestart
-	 * //1. Create a new controller directly:
-	 * new Todos($('#todos'));
-	 * //2. Use jQuery function
-	 * $('#todos').todos();
-	 * @codeend
-	 * 
-	 * ## Controller Initialization
-	 * 
-	 * It can be extremely useful to add an init method with 
-	 * setup functionality for your widget.
-	 * 
-	 * In the following example, I create a controller that when created, will put a message as the content of the element:
-	 * 
-	 *     $.Controller("SpecialController",
-	 *     {
-	 *       init: function( el, message ) {
-	 *         this.element.html(message)
-	 *       }
-	 *     })
-	 *     $(".special").special("Hello World")
-	 * 
-	 * ## Removing Controllers
-	 * 
-	 * Controller removal is built into jQuery.  So to remove a controller, you just have to remove its element:
-	 * 
-	 * @codestart
-	 * $(".special_controller").remove()
-	 * $("#containsControllers").html("")
-	 * @codeend
-	 * 
-	 * It's important to note that if you use raw DOM methods (<code>innerHTML, removeChild</code>), the controllers won't be destroyed.
-	 * 
-	 * If you just want to remove controller functionality, call destroy on the controller instance:
-	 * 
-	 * @codestart
-	 * $(".special_controller").controller().destroy()
-	 * @codeend
-	 * 
-	 * ## Accessing Controllers
-	 * 
-	 * Often you need to get a reference to a controller, there are a few ways of doing that.  For the 
-	 * following example, we assume there are 2 elements with <code>className="special"</code>.
-	 * 
-	 * @codestart
-	 * //creates 2 foo controllers
-	 * $(".special").foo()
-	 * 
-	 * //creates 2 bar controllers
-	 * $(".special").bar()
-	 * 
-	 * //gets all controllers on all elements:
-	 * $(".special").controllers() //-> [foo, bar, foo, bar]
-	 * 
-	 * //gets only foo controllers
-	 * $(".special").controllers(FooController) //-> [foo, foo]
-	 * 
-	 * //gets all bar controllers
-	 * $(".special").controllers(BarController) //-> [bar, bar]
-	 * 
-	 * //gets first controller
-	 * $(".special").controller() //-> foo
-	 * 
-	 * //gets foo controller via data
-	 * $(".special").data("controllers")["FooController"] //-> foo
-	 * @codeend
-	 * 
-	 * ## Calling methods on Controllers
-	 * 
-	 * Once you have a reference to an element, you can call methods on it.  However, Controller has
-	 * a few shortcuts:
-	 * 
-	 * @codestart
-	 * //creates foo controller
-	 * $(".special").foo({name: "value"})
-	 * 
-	 * //calls FooController.prototype.update
-	 * $(".special").foo({name: "value2"})
-	 * 
-	 * //calls FooController.prototype.bar
-	 * $(".special").foo("bar","something I want to pass")
-	 * @codeend
-	 * 
-	 * These methods let you call one controller from another controller.
-	 * 
-	 */
-	$.Class("jQuery.Controller",
-	/** 
-	 * @Static
-	 */
-	{
-		/**
-		 * Does 2 things:
-		 * 
-		 *   - Creates a jQuery helper for this controller.</li>
-		 *   - Calculates and caches which functions listen for events.</li>
-		 *    
-		 * ### jQuery Helper Naming Examples
-		 * 
-		 * 
-		 *     "TaskController" -> $().task_controller()
-		 *     "Controllers.Task" -> $().controllers_task()
-		 * 
-		 */
-		setup: function() {
-			// Allow contollers to inherit "defaults" from superclasses as it done in $.Class
-			this._super.apply(this, arguments);
-
-			// if you didn't provide a name, or are controller, don't do anything
-			if (!this.shortName || this.fullName == "jQuery.Controller" ) {
-				return;
-			}
-			// cache the underscored names
-			this._fullName = underscoreAndRemoveController(this.fullName);
-			this._shortName = underscoreAndRemoveController(this.shortName);
-
-			var controller = this,
-				/**
-				 * @attribute pluginName
-				 * Setting the <code>pluginName</code> property allows you
-				 * to change the jQuery plugin helper name from its 
-				 * default value.
-				 * 
-				 *     $.Controller("Mxui.Layout.Fill",{
-				 *       pluginName: "fillWith"
-				 *     },{});
-				 *     
-				 *     $("#foo").fillWith();
-				 */
-				pluginname = this.pluginName || this._fullName,
-				funcName, forLint;
-
-			// create jQuery plugin
-			if (!$.fn[pluginname] ) {
-				$.fn[pluginname] = function( options ) {
-
-					var args = makeArray(arguments),
-						//if the arg is a method on this controller
-						isMethod = typeof options == "string" && isFunction(controller[STR_PROTOTYPE][options]),
-						meth = args[0];
-					return this.each(function() {
-						//check if created
-						var controllers = data(this),
-							//plugin is actually the controller instance
-							plugin = controllers && controllers[pluginname];
-
-						if ( plugin ) {
-							if ( isMethod ) {
-								// call a method on the controller with the remaining args
-								plugin[meth].apply(plugin, args.slice(1));
-							} else {
-								// call the plugin's update method
-								plugin.update.apply(plugin, args);
-							}
-
-						} else {
-							//create a new controller instance
-							controller.newInstance.apply(controller, [this].concat(args));
-						}
-					});
-				};
-			}
-
-			// make sure listensTo is an array
-			
-			// calculate and cache actions
-			this.actions = {};
-
-			for ( funcName in this[STR_PROTOTYPE] ) {
-				if (funcName == 'constructor' || !isFunction(this[STR_PROTOTYPE][funcName]) ) {
-					continue;
-				}
-				if ( this._isAction(funcName) ) {
-					this.actions[funcName] = this._action(funcName);
-				}
-			}
-		},
-		hookup: function( el ) {
-			return new this(el);
-		},
-
-		/**
-		 * @hide
-		 * @param {String} methodName a prototype function
-		 * @return {Boolean} truthy if an action or not
-		 */
-		_isAction: function( methodName ) {
-			if ( actionMatcher.test(methodName) ) {
-				return true;
-			} else {
-				return $.inArray(methodName, this.listensTo) > -1 || $.event.special[methodName] || processors[methodName];
-			}
-
-		},
-		/**
-		 * @hide
-		 * This takes a method name and the options passed to a controller
-		 * and tries to return the data necessary to pass to a processor
-		 * (something that binds things).
-		 * 
-		 * For performance reasons, this called twice.  First, it is called when 
-		 * the Controller class is created.  If the methodName is templated
-		 * like : "{window} foo", it returns null.  If it is not templated
-		 * it returns event binding data.
-		 * 
-		 * The resulting data is added to this.actions.
-		 * 
-		 * When a controller instance is created, _action is called again, but only
-		 * on templated actions.  
-		 * 
-		 * @param {Object} methodName the method that will be bound
-		 * @param {Object} [options] first param merged with class default options
-		 * @return {Object} null or the processor and pre-split parts.  
-		 * The processor is what does the binding/subscribing.
-		 */
-		_action: function( methodName, options ) {
-			// reset the test index
-			parameterReplacer.lastIndex = 0;
-			
-			//if we don't have options (a controller instance), we'll run this later
-			if (!options && parameterReplacer.test(methodName) ) {
-				return null;
-			}
-			// If we have options, run sub to replace templates "{}" with a value from the options
-			// or the window
-			var convertedName = options ? Str.sub(methodName, [options, window]) : methodName,
-				
-				// If a "{}" resolves to an object, convertedName will be an array
-				arr = isArray(convertedName),
-				
-				// get the parts of the function = [convertedName, delegatePart, eventPart]
-				parts = (arr ? convertedName[1] : convertedName).match(breaker),
-				event = parts[2],
-				processor = processors[event] || basicProcessor;
-			return {
-				processor: processor,
-				parts: parts,
-				delegate : arr ? convertedName[0] : undefined
-			};
-		},
-		/**
-		 * @attribute processors
-		 * An object of {eventName : function} pairs that Controller uses to hook up events
-		 * auto-magically.  A processor function looks like:
-		 * 
-		 *     jQuery.Controller.processors.
-		 *       myprocessor = function( el, event, selector, cb, controller ) {
-		 *          //el - the controller's element
-		 *          //event - the event (myprocessor)
-		 *          //selector - the left of the selector
-		 *          //cb - the function to call
-		 *          //controller - the binding controller
-		 *       };
-		 * 
-		 * This would bind anything like: "foo~3242 myprocessor".
-		 * 
-		 * The processor must return a function that when called, 
-		 * unbinds the event handler.
-		 * 
-		 * Controller already has processors for the following events:
-		 * 
-		 *   - change 
-		 *   - click 
-		 *   - contextmenu 
-		 *   - dblclick 
-		 *   - focusin
-		 *   - focusout
-		 *   - keydown 
-		 *   - keyup 
-		 *   - keypress 
-		 *   - mousedown 
-		 *   - mouseenter
-		 *   - mouseleave
-		 *   - mousemove 
-		 *   - mouseout 
-		 *   - mouseover 
-		 *   - mouseup 
-		 *   - reset 
-		 *   - resize 
-		 *   - scroll 
-		 *   - select 
-		 *   - submit  
-		 * 
-		 * Listen to events on the document or window 
-		 * with templated event handlers:
-		 * 
-		 *
-		 *     $.Controller('Sized',{
-		 *       "{window} resize" : function(){
-		 *         this.element.width(this.element.parent().width() / 2);
-		 *       }
-		 *     });
-		 *     
-		 *     $('.foo').sized();
-		 */
-		processors: {},
-		/**
-		 * @attribute listensTo
-		 * An array of special events this controller 
-		 * listens too.  You only need to add event names that
-		 * are whole words (ie have no special characters).
-		 * 
-		 *     $.Controller('TabPanel',{
-		 *       listensTo : ['show']
-		 *     },{
-		 *       'show' : function(){
-		 *         this.element.show();
-		 *       }
-		 *     })
-		 *     
-		 *     $('.foo').tab_panel().trigger("show");
-		 * 
-		 */
-		listensTo: [],
-		/**
-		 * @attribute defaults
-		 * A object of name-value pairs that act as default values for a controller's 
-		 * [jQuery.Controller.prototype.options options].
-		 * 
-		 *     $.Controller("Message",
-		 *     {
-		 *       defaults : {
-		 *         message : "Hello World"
-		 *       }
-		 *     },{
-		 *       init : function(){
-		 *         this.element.text(this.options.message);
-		 *       }
-		 *     })
-		 *     
-		 *     $("#el1").message(); //writes "Hello World"
-		 *     $("#el12").message({message: "hi"}); //writes hi
-		 *     
-		 * In [jQuery.Controller.prototype.setup setup] the options passed to the controller
-		 * are merged with defaults.  This is not a deep merge.
-		 */
-		defaults: {}
-	},
-	/** 
-	 * @Prototype
-	 */
-	{
-		/**
-		 * Setup is where most of controller's magic happens.  It does the following:
-		 * 
-		 * ### 1. Sets this.element
-		 * 
-		 * The first parameter passed to new Controller(el, options) is expected to be 
-		 * an element.  This gets converted to a jQuery wrapped element and set as
-		 * [jQuery.Controller.prototype.element this.element].
-		 * 
-		 * ### 2. Adds the controller's name to the element's className.
-		 * 
-		 * Controller adds it's plugin name to the element's className for easier 
-		 * debugging.  For example, if your Controller is named "Foo.Bar", it adds
-		 * "foo_bar" to the className.
-		 * 
-		 * ### 3. Saves the controller in $.data
-		 * 
-		 * A reference to the controller instance is saved in $.data.  You can find 
-		 * instances of "Foo.Bar" like: 
-		 * 
-		 *     $("#el").data("controllers")['foo_bar'].
-		 * 
-		 * ### Binds event handlers
-		 * 
-		 * Setup does the event binding described in [jquery.controller.listening Listening To Events].
-		 * 
-		 * @param {HTMLElement} element the element this instance operates on.
-		 * @param {Object} [options] option values for the controller.  These get added to
-		 * this.options and merged with [jQuery.Controller.static.defaults defaults].
-		 * @return {Array} return an array if you wan to change what init is called with. By
-		 * default it is called with the element and options passed to the controller.
-		 */
-		setup: function( element, options ) {
-			var funcName, ready, cls = this[STR_CONSTRUCTOR];
-
-			//want the raw element here
-			element = (typeof element == 'string' ? $(element) :
-				(element.jquery ? element : [element]) )[0];
-
-			//set element and className on element
-			var pluginname = cls.pluginName || cls._fullName;
-
-			//set element and className on element
-			this.element = $(element).addClass(pluginname);
-
-			//set in data
-			(data(element) || data(element, {}))[pluginname] = this;
-
-			
-			/**
-			 * @attribute options
-			 * 
-			 * Options are used to configure an controller.  They are
-			 * the 2nd argument
-			 * passed to a controller (or the first argument passed to the 
-			 * [jquery.controller.plugin controller's jQuery plugin]).
-			 * 
-			 * For example:
-			 * 
-			 *     $.Controller('Hello')
-			 *     
-			 *     var h1 = new Hello($('#content1'), {message: 'World'} );
-			 *     equal( h1.options.message , "World" )
-			 *     
-			 *     var h2 = $('#content2').hello({message: 'There'})
-			 *                            .controller();
-			 *     equal( h2.options.message , "There" )
-			 * 
-			 * Options are merged with [jQuery.Controller.static.defaults defaults] in
-			 * [jQuery.Controller.prototype.setup setup].
-			 * 
-			 * For example:
-			 * 
-			 *     $.Controller("Tabs", 
-			 *     {
-			 *        defaults : {
-			 *          activeClass: "ui-active-state"
-			 *        }
-			 *     },
-			 *     {
-			 *        init : function(){
-			 *          this.element.addClass(this.options.activeClass);
-			 *        }
-			 *     })
-			 *     
-			 *     $("#tabs1").tabs()                         // adds 'ui-active-state'
-			 *     $("#tabs2").tabs({activeClass : 'active'}) // adds 'active'
-			 *     
-			 * Options are typically updated by calling 
-			 * [jQuery.Controller.prototype.update update];
-			 *
-			 */
-			this.options = extend( extend(true, {}, cls.defaults), options);
-
-			
-
-			/**
-			 * @attribute called
-			 * String name of current function being called on controller instance.  This is 
-			 * used for picking the right view in render.
-			 * @hide
-			 */
-			this.called = "init";
-
-			// bind all event handlers
-			this.bind();
-
-			/**
-			 * @attribute element
-			 * The controller instance's delegated element. This 
-			 * is set by [jQuery.Controller.prototype.setup setup]. It 
-			 * is a jQuery wrapped element.
-			 * 
-			 * For example, if I add MyWidget to a '#myelement' element like:
-			 * 
-			 *     $.Controller("MyWidget",{
-			 *       init : function(){
-			 *         this.element.css("color","red")
-			 *       }
-			 *     })
-			 *     
-			 *     $("#myelement").my_widget()
-			 * 
-			 * MyWidget will turn #myelement's font color red.
-			 * 
-			 * ## Using a different element.
-			 * 
-			 * Sometimes, you want a different element to be this.element.  A
-			 * very common example is making progressively enhanced form widgets.
-			 * 
-			 * To change this.element, overwrite Controller's setup method like:
-			 * 
-			 *     $.Controller("Combobox",{
-			 *       setup : function(el, options){
-			 *          this.oldElement = $(el);
-			 *          var newEl = $('<div/>');
-			 *          this.oldElement.wrap(newEl);
-			 *          this._super(newEl, options);
-			 *       },
-			 *       init : function(){
-			 *          this.element //-> the div
-			 *       },
-			 *       ".option click" : function(){
-			 *         // event handler bound on the div
-			 *       },
-			 *       destroy : function(){
-			 *          var div = this.element; //save reference
-			 *          this._super();
-			 *          div.replaceWith(this.oldElement);
-			 *       }
-			 *     }
-			 */
-			return [this.element, this.options].concat(makeArray(arguments).slice(2));
-			/**
-			 * @function init
-			 * 
-			 * Implement this.
-			 */
-		},
-		/**
-		 * Bind attaches event handlers that will be 
-		 * removed when the controller is removed.  
-		 * 
-		 * This used to be a good way to listen to events outside the controller's
-		 * [jQuery.Controller.prototype.element element].  However,
-		 * using templated event listeners is now the prefered way of doing this.
-		 * 
-		 * ### Example:
-		 * 
-		 *     init: function() {
-		 *        // calls somethingClicked(el,ev)
-		 *        this.bind('click','somethingClicked') 
-		 *     
-		 *        // calls function when the window is clicked
-		 *        this.bind(window, 'click', function(ev){
-		 *          //do something
-		 *        })
-		 *     },
-		 *     somethingClicked: function( el, ev ) {
-		 *       
-		 *     }
-		 * 
-		 * @param {HTMLElement|jQuery.fn|Object} [el=this.element] 
-		 * The element to be bound.  If an eventName is provided,
-		 * the controller's element is used instead.
-		 * 
-		 * @param {String} eventName The event to listen for.
-		 * @param {Function|String} func A callback function or the String name of a controller function.  If a controller
-		 * function name is given, the controller function is called back with the bound element and event as the first
-		 * and second parameter.  Otherwise the function is called back like a normal bind.
-		 * @return {Integer} The id of the binding in this._bindings
-		 */
-		bind: function( el, eventName, func ) {
-			if( el === undefined ) {
-				//adds bindings
-				this._bindings = [];
-				//go through the cached list of actions and use the processor to bind
-				
-				var cls = this[STR_CONSTRUCTOR],
-					bindings = this._bindings,
-					actions = cls.actions,
-					element = this.element;
-					
-				for ( funcName in actions ) {
-					if ( actions.hasOwnProperty(funcName) ) {
-						ready = actions[funcName] || cls._action(funcName, this.options);
-						bindings.push(
-							ready.processor(ready.delegate || element, 
-							                ready.parts[2], 
-											ready.parts[1], 
-											funcName, 
-											this));
-					}
-				}
-	
-	
-				//setup to be destroyed ... don't bind b/c we don't want to remove it
-				var destroyCB = shifter(this,"destroy");
-				element.bind("destroyed", destroyCB);
-				bindings.push(function( el ) {
-					$(el).unbind("destroyed", destroyCB);
-				});
-				return bindings.length;
-			}
-			if ( typeof el == 'string' ) {
-				func = eventName;
-				eventName = el;
-				el = this.element;
-			}
-			return this._binder(el, eventName, func);
-		},
-		_binder: function( el, eventName, func, selector ) {
-			if ( typeof func == 'string' ) {
-				func = shifter(this,func);
-			}
-			this._bindings.push(binder(el, eventName, func, selector));
-			return this._bindings.length;
-		},
-		_unbind : function(){
-			var el = this.element[0];
-			each(this._bindings, function( key, value ) {
-				value(el);
-			});
-			//adds bindings
-			this._bindings = [];
-		},
-		/**
-		 * Delegate will delegate on an elememt and will be undelegated when the controller is removed.
-		 * This is a good way to delegate on elements not in a controller's element.<br/>
-		 * <h3>Example:</h3>
-		 * @codestart
-		 * // calls function when the any 'a.foo' is clicked.
-		 * this.delegate(document.documentElement,'a.foo', 'click', function(ev){
-		 *   //do something
-		 * })
-		 * @codeend
-		 * @param {HTMLElement|jQuery.fn} [element=this.element] the element to delegate from
-		 * @param {String} selector the css selector
-		 * @param {String} eventName the event to bind to
-		 * @param {Function|String} func A callback function or the String name of a controller function.  If a controller
-		 * function name is given, the controller function is called back with the bound element and event as the first
-		 * and second parameter.  Otherwise the function is called back like a normal bind.
-		 * @return {Integer} The id of the binding in this._bindings
-		 */
-		delegate: function( element, selector, eventName, func ) {
-			if ( typeof element == 'string' ) {
-				func = eventName;
-				eventName = selector;
-				selector = element;
-				element = this.element;
-			}
-			return this._binder(element, eventName, func, selector);
-		},
-		/**
-		 * Update extends [jQuery.Controller.prototype.options this.options] 
-		 * with the `options` argument and rebinds all events.  It basically
-		 * re-configures the controller.
-		 * 
-		 * For example, the following controller wraps a recipe form. When the form
-		 * is submitted, it creates the recipe on the server.  When the recipe
-		 * is `created`, it resets the form with a new instance.
-		 * 
-		 *     $.Controller('Creator',{
-		 *       "{recipe} created" : function(){
-		 *         this.update({recipe : new Recipe()});
-		 *         this.element[0].reset();
-		 *         this.find("[type=submit]").val("Create Recipe")
-		 *       },
-		 *       "submit" : function(el, ev){
-		 *         ev.preventDefault();
-		 *         var recipe = this.options.recipe;
-		 *         recipe.attrs( this.element.formParams() );
-		 *         this.find("[type=submit]").val("Saving...")
-		 *         recipe.save();
-		 *       }
-		 *     });
-		 *     $('#createRecipes').creator({recipe : new Recipe()})
-		 * 
-		 * 
-		 * @demo jquery/controller/demo-update.html
-		 * 
-		 * Update is called if a controller's [jquery.controller.plugin jQuery helper] is 
-		 * called on an element that already has a controller instance
-		 * of the same type. 
-		 * 
-		 * For example, a widget that listens for model updates
-		 * and updates it's html would look like.  
-		 * 
-		 *     $.Controller('Updater',{
-		 *       // when the controller is created, update the html
-		 *       init : function(){
-		 *         this.updateView();
-		 *       },
-		 *       
-		 *       // update the html with a template
-		 *       updateView : function(){
-		 *         this.element.html( "content.ejs",
-		 *                            this.options.model ); 
-		 *       },
-		 *       
-		 *       // if the model is updated
-		 *       "{model} updated" : function(){
-		 *         this.updateView();
-		 *       },
-		 *       update : function(options){
-		 *         // make sure you call super
-		 *         this._super(options);
-		 *          
-		 *         this.updateView();
-		 *       }
-		 *     })
-		 * 
-		 *     // create the controller
-		 *     // this calls init
-		 *     $('#item').updater({model: recipe1});
-		 *     
-		 *     // later, update that model
-		 *     // this calls "{model} updated"
-		 *     recipe1.update({name: "something new"});
-		 *     
-		 *     // later, update the controller with a new recipe
-		 *     // this calls update
-		 *     $('#item').updater({model: recipe2});
-		 *     
-		 *     // later, update the new model
-		 *     // this calls "{model} updated"
-		 *     recipe2.update({name: "something newer"});
-		 * 
-		 * _NOTE:_ If you overwrite `update`, you probably need to call
-		 * this._super.
-		 * 
-		 * ### Example
-		 * 
-		 *     $.Controller("Thing",{
-		 *       init: function( el, options ) {
-		 *         alert( 'init:'+this.options.prop )
-		 *       },
-		 *       update: function( options ) {
-		 *         this._super(options);
-		 *         alert('update:'+this.options.prop)
-		 *       }
-		 *     });
-		 *     $('#myel').thing({prop : 'val1'}); // alerts init:val1
-		 *     $('#myel').thing({prop : 'val2'}); // alerts update:val2
-		 * 
-		 * @param {Object} options A list of options to merge with 
-		 * [jQuery.Controller.prototype.options this.options].  Often, this method
-		 * is called by the [jquery.controller.plugin jQuery helper function].
-		 */
-		update: function( options ) {
-			extend(this.options, options);
-			this._unbind();
-			this.bind();
-		},
-		/**
-		 * Destroy unbinds and undelegates all event handlers on this controller, 
-		 * and prevents memory leaks.  This is called automatically
-		 * if the element is removed.  You can overwrite it to add your own
-		 * teardown functionality:
-		 * 
-		 *     $.Controller("ChangeText",{
-		 *       init : function(){
-		 *         this.oldText = this.element.text();
-		 *         this.element.text("Changed!!!")
-		 *       },
-		 *       destroy : function(){
-		 *         this.element.text(this.oldText);
-		 *         this._super(); //Always call this!
-		 *     })
-		 * 
-		 * Make sure you always call <code>_super</code> when overwriting
-		 * controller's destroy event.  The base destroy functionality unbinds
-		 * all event handlers the controller has created.
-		 * 
-		 * You could call destroy manually on an element with ChangeText
-		 * added like:
-		 * 
-		 *     $("#changed").change_text("destroy");
-		 * 
-		 */
-		destroy: function() {
-			if ( this._destroyed ) {
-				throw this[STR_CONSTRUCTOR].shortName + " controller already deleted";
-			}
-			var self = this,
-				fname = this[STR_CONSTRUCTOR].pluginName || this[STR_CONSTRUCTOR]._fullName,
-				controllers;
-			
-			// mark as destroyed
-			this._destroyed = true;
-			
-			// remove the className
-			this.element.removeClass(fname);
-
-			// unbind bindings
-			this._unbind();
-			// clean up
-			delete this._actions;
-
-			delete this.element.data("controllers")[fname];
-			
-			$(this).triggerHandler("destroyed"); //in case we want to know if the controller is removed
-			
-			this.element = null;
-		},
-		/**
-		 * Queries from the controller's element.
-		 * @codestart
-		 * ".destroy_all click" : function() {
-		 *    this.find(".todos").remove();
-		 * }
-		 * @codeend
-		 * @param {String} selector selection string
-		 * @return {jQuery.fn} returns the matched elements
-		 */
-		find: function( selector ) {
-			return this.element.find(selector);
-		},
-		//tells callback to set called on this.  I hate this.
-		_set_called: true
-	});
-
-	var processors = $.Controller.processors,
-
-	//------------- PROCESSSORS -----------------------------
-	//processors do the binding.  They return a function that
-	//unbinds when called.
-	//the basic processor that binds events
-	basicProcessor = function( el, event, selector, methodName, controller ) {
-		return binder(el, event, shifter(controller, methodName), selector);
-	};
-
-
-
-
-	//set common events to be processed as a basicProcessor
-	each("change click contextmenu dblclick keydown keyup keypress mousedown mousemove mouseout mouseover mouseup reset resize scroll select submit focusin focusout mouseenter mouseleave".split(" "), function( i, v ) {
-		processors[v] = basicProcessor;
-	});
-	/**
-	 *  @add jQuery.fn
-	 */
-
-	//used to determine if a controller instance is one of controllers
-	//controllers can be strings or classes
-	var i, isAControllerOf = function( instance, controllers ) {
-		for ( i = 0; i < controllers.length; i++ ) {
-			if ( typeof controllers[i] == 'string' ? instance[STR_CONSTRUCTOR]._shortName == controllers[i] : instance instanceof controllers[i] ) {
-				return true;
-			}
-		}
-		return false;
-	};
-	$.fn.extend({
-		/**
-		 * @function controllers
-		 * Gets all controllers in the jQuery element.
-		 * @return {Array} an array of controller instances.
-		 */
-		controllers: function() {
-			var controllerNames = makeArray(arguments),
-				instances = [],
-				controllers, c, cname;
-			//check if arguments
-			this.each(function() {
-	
-				controllers = $.data(this, "controllers");
-				for ( cname in controllers ) {
-					if ( controllers.hasOwnProperty(cname) ) {
-						c = controllers[cname];
-						if (!controllerNames.length || isAControllerOf(c, controllerNames) ) {
-							instances.push(c);
-						}
-					}
-				}
-			});
-			return instances;
-		},
-		/**
-		 * @function controller
-		 * Gets a controller in the jQuery element.  With no arguments, returns the first one found.
-		 * @param {Object} controller (optional) if exists, the first controller instance with this class type will be returned.
-		 * @return {jQuery.Controller} the first controller.
-		 */
-		controller: function( controller ) {
-			return this.controllers.apply(this, arguments)[0];
-		}
-	});
-	
-
-})(jQuery);
-(function( $ ) {
 	/**
 	 * @add jQuery.event.special
 	 */
@@ -26979,8 +29669,29 @@ $.Model('Trend.Models.Connection',
 {
 	findAll: "/connections.json",
   	findOne : "/connections/{id}.json", 
-  	create : "/connections.json",
- 	update : "/connections/{id}.json",
+	create : function(attrs, success, error){
+	},
+	update : function(params, attrs, success, error){
+		var self = this;
+		Trend.Core.Message.instance({message: 'Saving changes, please wait...'});
+		$.fixture.delay = 2000;
+		$.fixture('/fixture/'+$.String.underscore(this.shortName)+'/'+attrs.id, function(orig, settings, headers){
+			var test = new self(attrs);
+			if(test.errors()){
+				return [500, 'error', attrs];
+			}
+			else
+			{
+				return [200, 'success', attrs];
+			}
+		});
+		return $.ajax({
+			url: '/fixture/'+$.String.underscore(this.shortName)+'/'+attrs.id,
+			dataType: 'json '+$.String.underscore(this.shortName)+'.model',
+			success: success,
+			error: error
+		});
+	},
   	destroy : "/connections/{id}.json",
 	init: function(){
 		var self = this;
@@ -27006,670 +29717,6 @@ $.Model('Trend.Models.Connection',
 /* @Prototype */
 {});
 
-})(jQuery);
-(function( $ ) {
-
-	// HELPER METHODS ==============
-	var myEval = function( script ) {
-		eval(script);
-	},
-		// removes the last character from a string
-		// this is no longer needed
-		// chop = function( string ) {
-		//	return string.substr(0, string.length - 1);
-		//},
-		rSplit = $.String.rsplit,
-		extend = $.extend,
-		isArray = $.isArray,
-		// regular expressions for caching
-		returnReg = /\r\n/g,
-		retReg = /\r/g,
-		newReg = /\n/g,
-		nReg = /\n/,
-		slashReg = /\\/g,
-		quoteReg = /"/g,
-		singleQuoteReg = /'/g,
-		tabReg = /\t/g,
-		leftBracket = /\{/g,
-		rightBracket = /\}/g,
-		quickFunc = /\s*\(([\$\w]+)\)\s*->([^\n]*)/,
-		// escapes characters starting with \
-		clean = function( content ) {
-			return content.replace(slashReg, '\\\\').replace(newReg, '\\n').replace(quoteReg, '\\"').replace(tabReg, '\\t');
-		},
-		// escapes html
-		// - from prototype  http://www.prototypejs.org/
-		escapeHTML = function( content ) {
-			return content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(quoteReg, '&#34;').replace(singleQuoteReg, "&#39;");
-		},
-		$View = $.View,
-		bracketNum = function(content){
-			var lefts = content.match(leftBracket),
-				rights = content.match(rightBracket);
-				
-			return (lefts ? lefts.length : 0) - 
-				   (rights ? rights.length : 0);
-		},
-		/**
-		 * @class jQuery.EJS
-		 * 
-		 * @plugin jquery/view/ejs
-		 * @parent jQuery.View
-		 * @download  http://jmvcsite.heroku.com/pluginify?plugins[]=jquery/view/ejs/ejs.js
-		 * @test jquery/view/ejs/qunit.html
-		 * 
-		 * 
-		 * Ejs provides <a href="http://www.ruby-doc.org/stdlib/libdoc/erb/rdoc/">ERB</a> 
-		 * style client side templates.  Use them with controllers to easily build html and inject
-		 * it into the DOM.
-		 * 
-		 * ###  Example
-		 * 
-		 * The following generates a list of tasks:
-		 * 
-		 * @codestart html
-		 * &lt;ul>
-		 * &lt;% for(var i = 0; i < tasks.length; i++){ %>
-		 *     &lt;li class="task &lt;%= tasks[i].identity %>">&lt;%= tasks[i].name %>&lt;/li>
-		 * &lt;% } %>
-		 * &lt;/ul>
-		 * @codeend
-		 * 
-		 * For the following examples, we assume this view is in <i>'views\tasks\list.ejs'</i>.
-		 * 
-		 * 
-		 * ## Use
-		 * 
-		 * ### Loading and Rendering EJS:
-		 * 
-		 * You should use EJS through the helper functions [jQuery.View] provides such as:
-		 * 
-		 *   - [jQuery.fn.after after]
-		 *   - [jQuery.fn.append append]
-		 *   - [jQuery.fn.before before]
-		 *   - [jQuery.fn.html html], 
-		 *   - [jQuery.fn.prepend prepend],
-		 *   - [jQuery.fn.replaceWith replaceWith], and 
-		 *   - [jQuery.fn.text text].
-		 * 
-		 * or [jQuery.Controller.prototype.view].
-		 * 
-		 * ### Syntax
-		 * 
-		 * EJS uses 5 types of tags:
-		 * 
-		 *   - <code>&lt;% CODE %&gt;</code> - Runs JS Code.
-		 *     For example:
-		 *     
-		 *         <% alert('hello world') %>
-		 *     
-		 *   - <code>&lt;%= CODE %&gt;</code> - Runs JS Code and writes the _escaped_ result into the result of the template.
-		 *     For example:
-		 *     
-		 *         <h1><%= 'hello world' %></h1>
-		 *         
-		 *   - <code>&lt;%== CODE %&gt;</code> - Runs JS Code and writes the _unescaped_ result into the result of the template.
-		 *     For example:
-		 *     
-		 *         <h1><%== '<span>hello world</span>' %></h1>
-		 *         
-		 *   - <code>&lt;%%= CODE %&gt;</code> - Writes <%= CODE %> to the result of the template.  This is very useful for generators.
-		 *     
-		 *         <%%= 'hello world' %>
-		 *         
-		 *   - <code>&lt;%# CODE %&gt;</code> - Used for comments.  This does nothing.
-		 *     
-		 *         <%# 'hello world' %>
-		 *        
-		 * ## Hooking up controllers
-		 * 
-		 * After drawing some html, you often want to add other widgets and plugins inside that html.
-		 * View makes this easy.  You just have to return the Contoller class you want to be hooked up.
-		 * 
-		 * @codestart
-		 * &lt;ul &lt;%= Mxui.Tabs%>>...&lt;ul>
-		 * @codeend
-		 * 
-		 * You can even hook up multiple controllers:
-		 * 
-		 * @codestart
-		 * &lt;ul &lt;%= [Mxui.Tabs, Mxui.Filler]%>>...&lt;ul>
-		 * @codeend
-		 * 
-		 * To hook up a controller with options or any other jQuery plugin use the
-		 * [jQuery.EJS.Helpers.prototype.plugin | plugin view helper]:
-		 * 
-		 * @codestart
-		 * &lt;ul &lt;%= plugin('mxui_tabs', { option: 'value' }) %>>...&lt;ul>
-		 * @codeend
-		 * 
-		 * Don't add a semicolon when using view helpers.
-		 * 
-		 * 
-		 * <h2>View Helpers</h2>
-		 * View Helpers return html code.  View by default only comes with 
-		 * [jQuery.EJS.Helpers.prototype.view view] and [jQuery.EJS.Helpers.prototype.text text].
-		 * You can include more with the view/helpers plugin.  But, you can easily make your own!
-		 * Learn how in the [jQuery.EJS.Helpers Helpers] page.
-		 * 
-		 * @constructor Creates a new view
-		 * @param {Object} options A hash with the following options
-		 * <table class="options">
-		 *     <tbody><tr><th>Option</th><th>Default</th><th>Description</th></tr>
-		 *     <tr>
-		 *      <td>text</td>
-		 *      <td>&nbsp;</td>
-		 *      <td>uses the provided text as the template. Example:<br/><code>new View({text: '&lt;%=user%>'})</code>
-		 *      </td>
-		 *     </tr>
-		 *     <tr>
-		 *      <td>type</td>
-		 *      <td>'<'</td>
-		 *      <td>type of magic tags.  Options are '&lt;' or '['
-		 *      </td>
-		 *     </tr>
-		 *     <tr>
-		 *      <td>name</td>
-		 *      <td>the element ID or url </td>
-		 *      <td>an optional name that is used for caching.
-		 *      </td>
-		 *     </tr>
-		 *    </tbody></table>
-		 */
-		EJS = function( options ) {
-			// If called without new, return a function that 
-			// renders with data and helpers like
-			// EJS({text: '<%= message %>'})({message: 'foo'});
-			// this is useful for steal's build system
-			if ( this.constructor != EJS ) {
-				var ejs = new EJS(options);
-				return function( data, helpers ) {
-					return ejs.render(data, helpers);
-				};
-			}
-			// if we get a function directly, it probably is coming from
-			// a steal-packaged view
-			if ( typeof options == "function" ) {
-				this.template = {
-					fn: options
-				};
-				return;
-			}
-			//set options on self
-			extend(this, EJS.options, options);
-			this.template = compile(this.text, this.type, this.name);
-		};
-	// add EJS to jQuery if it exists
-	window.jQuery && (jQuery.EJS = EJS);
-	/** 
-	 * @Prototype
-	 */
-	EJS.prototype.
-	/**
-	 * Renders an object with view helpers attached to the view.
-	 * 
-	 *     new EJS({text: "<%= message %>"}).render({
-	 *       message: "foo"
-	 *     },{helper: function(){ ... }})
-	 *     
-	 * @param {Object} object data to be rendered
-	 * @param {Object} [extraHelpers] an object with view helpers
-	 * @return {String} returns the result of the string
-	 */
-	render = function( object, extraHelpers ) {
-		object = object || {};
-		this._extra_helpers = extraHelpers;
-		var v = new EJS.Helpers(object, extraHelpers || {});
-		return this.template.fn.call(object, object, v);
-	};
-	/**
-	 * @Static
-	 */
-
-	extend(EJS, {
-		/**
-		 * Used to convert what's in &lt;%= %> magic tags to a string
-		 * to be inserted in the rendered output.
-		 * 
-		 * Typically, it's a string, and the string is just inserted.  However,
-		 * if it's a function or an object with a hookup method, it can potentially be 
-		 * be ran on the element after it's inserted into the page.
-		 * 
-		 * This is a very nice way of adding functionality through the view.
-		 * Usually this is done with [jQuery.EJS.Helpers.prototype.plugin]
-		 * but the following fades in the div element after it has been inserted:
-		 * 
-		 * @codestart
-		 * &lt;%= function(el){$(el).fadeIn()} %>
-		 * @codeend
-		 * 
-		 * @param {String|Object|Function} input the value in between the
-		 * write magic tags: &lt;%= %>
-		 * @return {String} returns the content to be added to the rendered
-		 * output.  The content is different depending on the type:
-		 * 
-		 *   * string - the original string
-		 *   * null or undefined - the empty string ""
-		 *   * an object with a hookup method - the attribute "data-view-id='XX'", where XX is a hookup number for jQuery.View
-		 *   * a function - the attribute "data-view-id='XX'", where XX is a hookup number for jQuery.View
-		 *   * an array - the attribute "data-view-id='XX'", where XX is a hookup number for jQuery.View
-		 */
-		text: function( input ) {
-			// if it's a string, return
-			if ( typeof input == 'string' ) {
-				return input;
-			}
-			// if has no value
-			if ( input === null || input === undefined ) {
-				return '';
-			}
-
-			// if it's an object, and it has a hookup method
-			var hook = (input.hookup &&
-			// make a function call the hookup method
-
-			function( el, id ) {
-				input.hookup.call(input, el, id);
-			}) ||
-			// or if it's a function, just use the input
-			(typeof input == 'function' && input) ||
-			// of it its an array, make a function that calls hookup or the function
-			// on each item in the array
-			(isArray(input) &&
-			function( el, id ) {
-				for ( var i = 0; i < input.length; i++ ) {
-					input[i].hookup ? input[i].hookup(el, id) : input[i](el, id);
-				}
-			});
-			// finally, if there is a funciton to hookup on some dom
-			// pass it to hookup to get the data-view-id back
-			if ( hook ) {
-				return "data-view-id='" + $View.hookup(hook) + "'";
-			}
-			// finally, if all else false, toString it
-			return input.toString ? input.toString() : "";
-		},
-		/**
-		 * Escapes the text provided as html if it's a string.  
-		 * Otherwise, the value is passed to EJS.text(text).
-		 * 
-		 * @param {String|Object|Array|Function} text to escape.  Otherwise,
-		 * the result of [jQuery.EJS.text] is returned.
-		 * @return {String} the escaped text or likely a $.View data-view-id attribute.
-		 */
-		clean: function( text ) {
-			//return sanatized text
-			if ( typeof text == 'string' ) {
-				return escapeHTML(text);
-			} else if ( typeof text == 'number' ) {
-				return text;
-			} else {
-				return EJS.text(text);
-			}
-		},
-		/**
-		 * @attribute options
-		 * Sets default options for all views.
-		 * 
-		 *     $.EJS.options.type = '['
-		 * 
-		 * Only one option is currently supported: type.
-		 * 
-		 * Type is the left hand magic tag.
-		 */
-		options: {
-			type: '<',
-			ext: '.ejs'
-		}
-	});
-	// ========= SCANNING CODE =========
-	// Given a scanner, and source content, calls block  with each token
-	// scanner - an object of magicTagName : values
-	// source - the source you want to scan
-	// block - function(token, scanner), called with each token
-	var scan = function( scanner, source, block ) {
-		// split on /\n/ to have new lines on their own line.
-		var source_split = rSplit(source, nReg),
-			i = 0;
-		for (; i < source_split.length; i++ ) {
-			scanline(scanner, source_split[i], block);
-		}
-
-	},
-		scanline = function( scanner, line, block ) {
-			scanner.lines++;
-			var line_split = rSplit(line, scanner.splitter),
-				token;
-			for ( var i = 0; i < line_split.length; i++ ) {
-				token = line_split[i];
-				if ( token !== null ) {
-					block(token, scanner);
-				}
-			}
-		},
-		// creates a 'scanner' object.  This creates
-		// values for the left and right magic tags
-		// it's splitter property is a regexp that splits content
-		// by all tags
-		makeScanner = function( left, right ) {
-			var scanner = {};
-			extend(scanner, {
-				left: left + '%',
-				right: '%' + right,
-				dLeft: left + '%%',
-				dRight: '%%' + right,
-				eeLeft: left + '%==',
-				eLeft: left + '%=',
-				cmnt: left + '%#',
-				scan: scan,
-				lines: 0
-			});
-			scanner.splitter = new RegExp("(" + [scanner.dLeft, scanner.dRight, scanner.eeLeft, scanner.eLeft, scanner.cmnt, scanner.left, scanner.right + '\n', scanner.right, '\n'].join(")|(").
-			replace(/\[/g, "\\[").replace(/\]/g, "\\]") + ")");
-			return scanner;
-		},
-		// compiles a template where
-		// source - template text
-		// left - the left magic tag
-		// name - the name of the template (for debugging)
-		// returns an object like: {out : "", fn : function(){ ... }} where
-		//   out -  the converted JS source of the view
-		//   fn - a function made from the JS source
-		compile = function( source, left, name ) {
-			// make everything only use \n
-			source = source.replace(returnReg, "\n").replace(retReg, "\n");
-			// if no left is given, assume <
-			left = left || '<';
-
-			// put and insert cmds are used for adding content to the template
-			// currently they are identical, I am not sure why
-			var put_cmd = "___v1ew.push(",
-				insert_cmd = put_cmd,
-				// the text that starts the view code (or block function)
-				startTxt = 'var ___v1ew = [];',
-				// the text that ends the view code (or block function)
-				finishTxt = "return ___v1ew.join('')",
-				// initialize a buffer
-				buff = new EJS.Buffer([startTxt], []),
-				// content is used as the current 'processing' string
-				// this is the content between magic tags
-				content = '',
-				// adds something to be inserted into the view template
-				// this comes out looking like __v1ew.push("CONENT")
-				put = function( content ) {
-					buff.push(put_cmd, '"', clean(content), '");');
-				},
-				// the starting magic tag
-				startTag = null,
-				// cleans the running content
-				empty = function() {
-					content = ''
-				},
-				// what comes after clean or text
-				doubleParen = "));",
-				// a stack used to keep track of how we should end a bracket }
-				// once we have a <%= %> with a leftBracket
-				// we store how the file should end here (either '))' or ';' )
-				endStack =[];
-
-			// start going token to token
-			scan(makeScanner(left, left === '[' ? ']' : '>'), source || "", function( token, scanner ) {
-				// if we don't have a start pair
-				var bn;
-				if ( startTag === null ) {
-					switch ( token ) {
-					case '\n':
-						content = content + "\n";
-						put(content);
-						buff.cr();
-						empty();
-						break;
-						// set start tag, add previous content (if there is some)
-						// clean content
-					case scanner.left:
-					case scanner.eLeft:
-					case scanner.eeLeft:
-					case scanner.cmnt:
-						// a new line, just add whatever content w/i a clean
-						// reset everything
-						startTag = token;
-						if ( content.length > 0 ) {
-							put(content);
-						}
-						empty();
-						break;
-
-					case scanner.dLeft:
-						// replace <%% with <%
-						content += scanner.left;
-						break;
-					default:
-						content += token;
-						break;
-					}
-				}
-				else {
-					//we have a start tag
-					switch ( token ) {
-					case scanner.right:
-						// %>
-						switch ( startTag ) {
-						case scanner.left:
-							// <%
-							
-							// get the number of { minus }
-							bn = bracketNum(content);
-							// how are we ending this statement
-							var last = 
-								// if the stack has value and we are ending a block
-								endStack.length && bn == -1 ? 
-								// use the last item in the block stack
-								endStack.pop() : 
-								// or use the default ending
-								";";
-							
-							// if we are ending a returning block
-							// add the finish text which returns the result of the
-							// block 
-							if(last === doubleParen) {
-								buff.push(finishTxt)
-							}
-							// add the remaining content
-							buff.push(content, last);
-							
-							// if we have a block, start counting 
-							if(bn === 1 ){
-								endStack.push(";")
-							}
-							break;
-						case scanner.eLeft:
-							// <%= clean content
-							bn = bracketNum(content);
-							if( bn ) {
-								endStack.push(doubleParen)
-							}
-							if(quickFunc.test(content)){
-								var parts = content.match(quickFunc)
-								content = "function(__){var "+parts[1]+"=$(__);"+parts[2]+"}"
-							}
-							buff.push(insert_cmd, "jQuery.EJS.clean(", content,bn ? startTxt : doubleParen);
-							break;
-						case scanner.eeLeft:
-							// <%== content
-							
-							// get the number of { minus } 
-							bn = bracketNum(content);
-							// if we have more {, it means there is a block
-							if( bn ){
-								// when we return to the same # of { vs } end wiht a doubleParen
-								endStack.push(doubleParen)
-							} 
-							
-							buff.push(insert_cmd, "jQuery.EJS.text(", content, 
-								// if we have a block
-								bn ? 
-								// start w/ startTxt "var _v1ew = [])"
-								startTxt : 
-								// if not, add doubleParent to close push and text
-								doubleParen
-								);
-							break;
-						}
-						startTag = null;
-						empty();
-						break;
-					case scanner.dRight:
-						content += scanner.right;
-						break;
-					default:
-						content += token;
-						break;
-					}
-				}
-			})
-			if ( content.length > 0 ) {
-				// Should be content.dump in Ruby
-				buff.push(put_cmd, '"', clean(content) + '");');
-			}
-			var template = buff.close(),
-				out = {
-					out: 'try { with(_VIEW) { with (_CONTEXT) {' + template + " "+finishTxt+"}}}catch(e){e.lineNumber=null;throw e;}"
-				};
-			//use eval instead of creating a function, b/c it is easier to debug
-			myEval.call(out, 'this.fn = (function(_CONTEXT,_VIEW){' + out.out + '});\r\n//@ sourceURL=' + name + ".js");
-
-			return out;
-		};
-
-
-	// A Buffer used to add content to.
-	// This is useful for performance and simplifying the 
-	// code above.
-	// We also can use this so we know line numbers when there
-	// is an error.  
-	// pre_cmd - code that sets up the buffer
-	// post - code that finalizes the buffer
-	EJS.Buffer = function( pre_cmd, post ) {
-		// the current line we are on
-		this.line = [];
-		// the combined content added to this buffer
-		this.script = [];
-		// content at the end of the buffer
-		this.post = post;
-		// add the pre commands to the first line
-		this.push.apply(this, pre_cmd);
-	};
-	EJS.Buffer.prototype = {
-		// add content to this line
-		// need to maintain your own semi-colons (for performance)
-		push: function() {
-			this.line.push.apply(this.line, arguments);
-		},
-		// starts a new line
-		cr: function() {
-			this.script.push(this.line.join(''), "\n");
-			this.line = [];
-		},
-		//returns the script too
-		close: function() {
-			// if we have ending line content, add it to the script
-			if ( this.line.length > 0 ) {
-				this.script.push(this.line.join(''));
-				this.line = [];
-			}
-			// if we have ending content, add it
-			this.post.length && this.push.apply(this, this.post);
-			// always end in a ;
-			this.script.push(";");
-			return this.script.join("");
-		}
-
-	};
-
-	/**
-	 * @class jQuery.EJS.Helpers
-	 * @parent jQuery.EJS
-	 * By adding functions to jQuery.EJS.Helpers.prototype, those functions will be available in the 
-	 * views.
-	 * 
-	 * The following helper converts a given string to upper case:
-	 * 
-	 * 	$.EJS.Helpers.prototype.toUpper = function(params)
-	 * 	{
-	 * 		return params.toUpperCase();
-	 * 	}
-	 * 
-	 * Use it like this in any EJS template:
-	 * 
-	 * 	<%= toUpper('javascriptmvc') %>
-	 * 
-	 * To access the current DOM element return a function that takes the element as a parameter:
-	 * 
-	 * 	$.EJS.Helpers.prototype.upperHtml = function(params)
-	 * 	{
-	 * 		return function(el) {
-	 * 			$(el).html(params.toUpperCase());
-	 * 		}
-	 * 	}
-	 * 
-	 * In your EJS view you can then call the helper on an element tag:
-	 * 
-	 * 	<div <%= upperHtml('javascriptmvc') %>></div>
-	 * 
-	 * 
-	 * @constructor Creates a view helper.  This function 
-	 * is called internally.  You should never call it.
-	 * @param {Object} data The data passed to the 
-	 * view.  Helpers have access to it through this._data
-	 */
-	EJS.Helpers = function( data, extras ) {
-		this._data = data;
-		this._extras = extras;
-		extend(this, extras);
-	};
-	/**
-	 * @prototype
-	 */
-	EJS.Helpers.prototype = {
-		/**
-		 * Hooks up a jQuery plugin on.
-		 * @param {String} name the plugin name
-		 */
-		plugin: function( name ) {
-			var args = $.makeArray(arguments),
-				widget = args.shift();
-			return function( el ) {
-				var jq = $(el);
-				jq[widget].apply(jq, args);
-			};
-		},
-		/**
-		 * Renders a partial view.  This is deprecated in favor of <code>$.View()</code>.
-		 */
-		view: function( url, data, helpers ) {
-			helpers = helpers || this._extras;
-			data = data || this._data;
-			return $View(url, data, helpers); //new EJS(options).render(data, helpers);
-		}
-	};
-
-	// options for steal's build
-	$View.register({
-		suffix: "ejs",
-		//returns a function that renders the view
-		script: function( id, src ) {
-			return "jQuery.EJS(function(_CONTEXT,_VIEW) { " + new EJS({
-				text: src,
-				name: id
-			}).template.out + " })";
-		},
-		renderer: function( id, text ) {
-			return EJS({
-				text: text,
-				name: id
-			});
-		}
-	});
 })(jQuery);
 (function( $ ) {
 	var radioCheck = /radio|checkbox/i,
@@ -28068,10 +30115,7 @@ $.Controller('Trend.Core',
 /** @Prototype */
 {
 	init : function(){
-		this.element.html("/trend/core/views/init.ejs", new Trend.Models.Connection(), this.callback('post_render'), this.callback('view_error'));
-	},
-	view_error: function(res){
-		console.log(res);
+		this.element.html("init.ejs", new Trend.Models.Connection({id: 0}), this.callback('post_render'));
 	},
 	post_render: function(){
 		this.find('form').tabs({
@@ -28088,15 +30132,34 @@ $.Controller('Trend.Core',
 		return data;
 	},
 	'button#apply click': function(){
-		this.find('form').trigger('submit');
+		this.save();
 	},
 	'button#cancel click': function(){
 	},
 	'submit': function(el, ev){
 		ev.preventDefault();
-		if(this.validate()){
-			this.find('form').model().save();
-		}
+	},
+	save: function(){
+		this.find('.ajax_result').remove();
+		this.find('form').model().save(this.callback(['remove_notify','save_success']), this.callback(['remove_notify','save_error']));
+	},
+	remove_notify: function(){
+		this.find('.ajax_result').remove();
+		Trend.Core.Message.destroy();
+	},
+	save_error: function(){
+		this.find('.ajax_result').remove();
+		$('<div class="ajax_result fail"><span class="unable_to_save"></span>'+'<span>Unable to save changes.</span>'+'</div>').hide().prependTo(this.find('#schedule'));
+		this.find('.ajax_result').slideDown();
+		this.validate();
+	},
+	save_success: function(){
+		this.render_success_result();
+	},
+	render_success_result: function(){
+		this.find('.ajax_result').remove();
+		$('<div class="ajax_result pass"><span class="ui-icon ui-icon-check"></span>'+'<span>Apply complete!</span>'+'</div>').hide().prependTo(this.find('#schedule'));
+		this.find('.ajax_result').slideDown();
 	},
 	validate: function(){
 		this.find('form').model().attrs(this.serialize());
