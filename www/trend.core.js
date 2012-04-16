@@ -16218,8 +16218,6 @@ Trend.Base('Trend.Core.Message',
 	onElement: 'body',
 	isSingleton: true,
 	destroy: function(){
-		if(element.data('controllers') && element.data('controllers')[this._fullName])
-		{
 			if(this.current == 'body')
 			{
 				$.unblockUI();
@@ -16229,7 +16227,6 @@ Trend.Base('Trend.Core.Message',
 				$(this.current).unblock();
 			}
 			this.instance().destroy();
-		}
 	},
 	current: ''
 },
@@ -30014,6 +30011,8 @@ $.Model('Trend.Models.Connection',
 			dataType: 'json '+$.String.underscore(this.shortName)+'.model',
 			success: success,
 			error: error
+		}).then(function(){
+			Trend.Core.Message.destroy();
 		});
 	}, 
 	create : function(attrs, success, error){
@@ -30558,7 +30557,6 @@ $.Controller('Trend.Core',
 	remove_notify: function(){
 		this.hideErrors();
 		this.find('.ajax_result').remove();
-		Trend.Core.Message.destroy();
 	},
 	save_error: function(){
 		this.find('.ajax_result').remove();
