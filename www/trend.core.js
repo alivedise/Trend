@@ -29980,6 +29980,7 @@ $.Model('Trend.Models.Connection',
 /* @Static */
 {
 	defaults: {
+		id: 0,
 		enable: true,
 		frequency: 'once',
 		hour: '00',
@@ -29989,7 +29990,9 @@ $.Model('Trend.Models.Connection',
 		ip: '...'
 	},
 	attributes: {
-		enable: 'boolean'
+		enable: 'boolean',
+		hourly_frequency: 'number',
+		daily_frequency: 'number'
 	},
 	findAll: "/connections.json",
 	findOne : function(attrs, success, error){
@@ -30012,7 +30015,6 @@ $.Model('Trend.Models.Connection',
 			success: success,
 			error: error
 		}).then(function(){
-			Trend.Core.Message.destroy();
 		});
 	}, 
 	create : function(attrs, success, error){
@@ -30036,9 +30038,11 @@ $.Model('Trend.Models.Connection',
 		});
 		return $.ajax({
 			url: '/fixture/post/'+$.String.underscore(this.shortName)+'/'+attrs.id,
-			dataType: 'json '+$.String.underscore(this.shortName)+'.model',
+			dataType: 'json',
 			success: success,
 			error: error
+		}).always(function(){
+			Trend.Core.Message.destroy();
 		});
 	},
   	destroy : "/connections/{id}.json",
@@ -30064,7 +30068,11 @@ $.Model('Trend.Models.Connection',
 	}
 },
 /* @Prototype */
-{});
+{
+	isNew: function(){
+		return false;
+	}
+});
 
 })(jQuery);
 (function( $ ) {
@@ -30552,7 +30560,7 @@ $.Controller('Trend.Core',
 	save: function(){
 		this.remove_notify();
 		this.find('form').model().attrs(this.serialize());
-		this.find('form').model().update(this.serialize(), this.callback(['remove_notify','save_success']), this.callback(['remove_notify','save_error']));
+		this.find('form').model().update(this.serialize(), this.callback(['save_success']), this.callback(['save_error']));
 	},
 	remove_notify: function(){
 		this.hideErrors();

@@ -18,24 +18,24 @@
 						<%== $.View('component/radio', {name: 'frequency', label: 'Hourly', value: 'hourly', current: this.frequency}) %>
 						<span>:</span>
 						<span>Every</span>
-						<select id="hour_frequency" name="hourly_frequency">
+						<select id="hourly_frequency" name="hourly_frequency">
 							<option value=1>1</option>
-							<option value=1>2</option>
-							<option value=1>3</option>
-							<option value=1>4</option>
-							<option value=1>6</option>
-							<option value=1>12</option>
+							<option value=2>2</option>
+							<option value=3>3</option>
+							<option value=4>4</option>
+							<option value=6>6</option>
+							<option value=12>12</option>
 						</select>
 						<span>Hours</span><br/>
 						<%== $.View('component/radio', {name: 'frequency', label: 'Daily', value: 'daily', current: 'once'}) %>
 						<span>:</span>
 						<span>Every</span>
-						<select id="day_frequency" name="daily_frequency">
+						<select id="daily_frequency" name="daily_frequency">
 							<option value=1>1</option>
-							<option value=1>2</option>
-							<option value=1>3</option>
-							<option value=1>4</option>
-							<option value=1>5</option>
+							<option value=2>2</option>
+							<option value=3>3</option>
+							<option value=4>4</option>
+							<option value=5>5</option>
 						</select>
 						<span>Days</span>
 					</div>
